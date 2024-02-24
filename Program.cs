@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddBlazorBootstrap();
 builder.Services.AddDbContext<FIABContext>(options =>
 {
 	var cs = FIAB.Models.Utilities.Env("ConnectionString", true, builder.Configuration);
