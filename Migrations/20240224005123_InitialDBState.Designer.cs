@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FIAB.Migrations
 {
     [DbContext(typeof(FIABContext))]
-    [Migration("20240224003255_initial")]
-    partial class initial
+    [Migration("20240224005123_InitialDBState")]
+    partial class InitialDBState
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
