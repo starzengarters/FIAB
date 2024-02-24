@@ -1,0 +1,164 @@
+@page "/Nouns/Create"
+@page "/Nouns/{IdString}/Edit"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+@if(Error != null)
+{
+	<h1>Aw, snap!</h1>
+	<p>@Error.Message</p>
+	<p>@Error.InnerException?.Message</p>
+	<p>@Error.StackTrace</p>
+}
+
+@if(ShowSuccessMessage)
+{
+	<div>
+		<strong>Success</strong><br/>
+		<p>@SuccessMessage</p>
+	</div>
+}
+
+@if(Loading)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<h1>
+		@(Editing ? $"Editing {Item.Id}" : "Create")
+	</h1>
+	
+	<EditForm Model="Item" OnSubmit="SubmitForm">
+		<div>
+			<label>
+				Name
+				<InputText @bind-Value=Item.Name />
+				<ValidationMessage For=@(() => Item.Name) />
+			</label>
+		</div>
+		<div>
+			<label>
+				Short Description
+				<InputText @bind-Value=Item.ShortDescription />
+				<ValidationMessage For=@(() => Item.ShortDescription) />
+			</label>
+		</div>
+		<div>
+			<label>
+				Details
+				<InputTextArea @bind-Value=Item.Details />
+				<ValidationMessage For=@(() => Item.Details) />
+			</label>
+		</div>
+		<DataAnnotationsValidator/>
+		<ValidationSummary/>
+		<div>
+			<button type="submit">Submit</button>
+		</div>
+	</EditForm>
+}
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private Noun Item = new Noun();
+	private bool Editing => Item.Id != 0;
+
+	private bool Loading = true;
+	private Exception? Error;
+	private string SuccessMessage = string.Empty;
+	private bool ShowSuccessMessage = false;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				int id = 0;
+				int.TryParse(IdString, out id);
+				
+				if(id != 0)
+				{
+					await SetItem(id);
+				}
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task SetItem(int id)
+	{
+		using var context = GetContext();
+		Item = await context.Nouns.SingleAsync(n => n.Id == id);
+	}
+
+	private async Task ShowSuccess(string message, int seconds = 5)
+	{
+		// TODO spice this up as a component that uses cancellationTokens.
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+
+		await Task.Delay(seconds * 1000);
+		ShowSuccessMessage = false;
+	}
+
+	private async Task SubmitForm()
+	{
+		var encounteredError = false;
+		try
+		{
+			Error = null;
+			Loading = true;
+			using var context = GetContext();
+
+			if(Editing)
+			{
+				context.Attach(Item);
+				context.Update(Item);
+				await context.SaveChangesAsync();
+			}
+			else
+			{
+				await context.Nouns.AddAsync(Item);
+				await context.SaveChangesAsync();
+				
+			}
+
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			encounteredError = true;
+		}
+		finally
+		{
+			Loading = false;
+
+			if(!encounteredError)
+			{
+				var action = Editing ? "edited" : "created";
+				await ShowSuccess($"{DateTime.Now} Noun {Item.Id} {action}.");
+			}
+		}
+	}
+}
