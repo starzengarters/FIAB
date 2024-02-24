@@ -1,0 +1,102 @@
+@page "/Nouns/{IdString}"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+@if(Error != null)
+{
+	<h1>Aw, snap!</h1>
+	<p>@Error.Message</p>
+	<p>@Error.InnerException?.Message</p>
+	<p>@Error.StackTrace</p>
+}
+
+@if(Loading)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
+	<div>@Item?.ShortDescription</div>
+	<div>@Item?.Details</div>
+	
+	<h2>Relationships (@Relationships.Count)</h2>
+	@foreach(var rel in Relationships)
+	{
+		<table border="1" style="border: solid 1px gray;">
+			<tr>
+				<td>
+					@rel.Subject.Name
+					<div style="font-size: smaller">@rel.Subject.ShortDescription</div>
+				</td>
+				<td>
+					<strong>@rel.RelationshipType.Name</strong>
+					<div style="font-size: smaller">@rel.Subject.ShortDescription</div>
+				</td>
+				<td>
+					@rel.Object.Name
+					<div style="font-size: smaller">@rel.Object.ShortDescription</div>
+				</td>
+			</tr>
+		</table>
+	}
+}
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private int Id => int.Parse(IdString);
+
+	private bool Loading = true;
+	private Exception? Error;
+	private Noun? Item;
+	private List<Relationship> Relationships = new List<Relationship>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				var tasks = new List<Task> { SetItem(), SetRelationships() };
+				await Task.WhenAll(tasks);
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task SetItem()
+	{
+		using var context = GetContext();
+		Item = await context.Nouns.SingleAsync(n => n.Id == Id);
+	}
+
+	private async Task SetRelationships()
+	{
+		using var context = GetContext();
+		Relationships = await context.Relationships
+			.Include(r => r.Subject)
+			.Include(r => r.RelationshipType)
+			.Include(r => r.Object)
+			.Where(r => r.Subject.Id == Id || r.Object.Id == Id)
+			.OrderBy(r => r.Subject.Id == Id)
+			.ToListAsync();
+	}
+}
