@@ -1,0 +1,77 @@
+@page "/Nouns"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+@if(Error != null)
+{
+	<h1>Aw, snap!</h1>
+	<p>@Error.Message</p>
+	<p>@Error.InnerException?.Message</p>
+	<p>@Error.StackTrace</p>
+}
+
+@if(Loading)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<h1>Nouns</h1>
+
+	<table border=1>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">Actions</th>
+		</tr>
+		@foreach(var noun in Listing)
+		{
+			<tr>
+				<td>
+					@noun.Name<br/>
+					<span style="font-size: smaller;">@noun.ShortDescription</span>
+				</td>
+				<td>
+					<a href="/Nouns/@noun.Id">View</a>
+				</td>
+			</tr>
+		}
+	</table>
+}
+
+@code
+{
+	private bool Loading = true;
+	private Exception? Error;
+
+	private List<Noun> Listing = new List<Noun>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				using var context = FIABContext.Create(Config);
+				// TODO - Pagination and Filtering will be needed soon.
+				Listing = await context.Nouns.ToListAsync();
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+}
