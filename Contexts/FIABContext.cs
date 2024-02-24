@@ -1,3 +1,4 @@
+using FIAB.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FIAB.Contexts
@@ -7,21 +8,38 @@ namespace FIAB.Contexts
 		public FIABContext(DbContextOptions<FIABContext> options) : base(options)
 		{}
 
-		public static FIABContext Create(string connectionString)
+		public FIABContext()
+		{
+		}
+
+		public static void UpdateOptions(DbContextOptionsBuilder options, string connectionString)
+		{
+			options
+				.UseNpgsql(connectionString)
+				.EnableDetailedErrors();
+		}
+
+		private static DbContextOptions<FIABContext> GetOptions(string connectionString)
 		{
 			var options = new DbContextOptionsBuilder<FIABContext>();
 
 			options
 				.UseNpgsql(connectionString)
 				.EnableDetailedErrors();
-
-			return new FIABContext(options.Options);
+			
+			return options.Options;
 		}
+
+		public static FIABContext Create(string connectionString) => new FIABContext(GetOptions(connectionString));
 
 		public static FIABContext Create(IConfiguration config)
 		{
-			var connectionString = Models.Utilities.Env("ConnectionString", true, config);
+			var connectionString = Utilities.Env("ConnectionString", true, config);
 			return Create(connectionString);
 		}
+
+		public DbSet<Noun> Nouns { get; set; }
+		public DbSet<RelationshipType> RelationshipTypes { get; set; }
+		public DbSet<Relationship> Relationships { get; set; }
 	}
 }
