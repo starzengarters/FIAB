@@ -9,13 +9,13 @@ namespace FIAB.Models
 	public class Relationship : Entity
 	{
 		[Required]
-		public required Noun NounA { get; set; }
-
-		[Required]
-		public required Noun NounB { get; set; }
+		public required Noun Subject { get; set; }
 
 		[Required]
 		public required RelationshipType RelationshipType { get; set; }
+
+		[Required]
+		public required Noun Object { get; set; }
 
 		public DateOnly? Started { get; set; }
 		public bool StartedIsApproximate { get; set; } = false;
