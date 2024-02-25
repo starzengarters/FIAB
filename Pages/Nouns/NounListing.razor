@@ -25,7 +25,7 @@ else
 		<div class="col-8 ps-0">
 			<h1 class="text-start">Nouns</h1>
 		</div>
-		<div class="col-md-4 ps-0">
+		<div class="col-md-4 text-end">
 			<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
 		</div>
 	</div>
@@ -45,9 +45,9 @@ else
 						@noun.Name<br/>
 						<span style="font-size: smaller;">@noun.ShortDescription</span>
 					</td>
-					<td>
-						<a href="/Nouns/@noun.Id">View</a>
-						<a href="/Nouns/@noun.Id/Edit">Edit</a>
+					<td class="text-end">
+						<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+						<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
 					</td>
 				</tr>
 			}
