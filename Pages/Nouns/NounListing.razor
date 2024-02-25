@@ -8,10 +8,35 @@
 <div class="container">
 @if(Error != null)
 {
-	<h1>Aw, snap!</h1>
-	<p>@Error.Message</p>
-	<p>@Error.InnerException?.Message</p>
-	<p>@Error.StackTrace</p>
+	<div class="row">
+		<div class="alert alert-danger" role="alert">
+			<p class="fs-4">Aw, snap!</p>
+			<p>@Error.Message</p>
+
+			@if(Error.InnerException != null || !string.IsNullOrWhiteSpace(Error.StackTrace))
+			{
+				<Accordion>
+				@if(Error.InnerException != null)
+				{
+					<AccordionItem Title="Inner Exception" IsActive=false>
+						<Content>
+							@Error.InnerException?.Message
+						</Content>
+					</AccordionItem>
+				}
+				@if(!string.IsNullOrWhiteSpace(Error.StackTrace))
+				{
+					<AccordionItem Title="Stack Trace" IsActive=false>
+						<Content>
+							@Error.StackTrace
+						</Content>
+					</AccordionItem>
+				}
+				</Accordion>
+			}
+			
+		</div>
+	</div>
 }
 
 @if(Loading)
