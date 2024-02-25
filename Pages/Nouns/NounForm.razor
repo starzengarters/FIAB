@@ -7,13 +7,7 @@
 @using System.Linq
 @inject IConfiguration Config
 
-@if(Error != null)
-{
-	<h1>Aw, snap!</h1>
-	<p>@Error.Message</p>
-	<p>@Error.InnerException?.Message</p>
-	<p>@Error.StackTrace</p>
-}
+<DisplayError Error=Error />
 
 @if(ShowSuccessMessage)
 {
