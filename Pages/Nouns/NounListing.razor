@@ -8,19 +8,7 @@
 <div class="container">
 
 <DisplayError Error=Error />
-
-@if(Loading)
-{
-	<div class="row">
-		<div class="offset-4 col-4 mt-4">
-			<Spinner Title="Loading Page" />
-			<span class="align-top ms-1">Loading...</span>
-		</div>
-	</div>
-}
-else
-{
-
+<ShowLoading Loading=Loading>
 	<div class="row">
 		<div class="col-8 ps-0">
 			<h1 class="text-start">Nouns</h1>
@@ -54,7 +42,7 @@ else
 			</tbody>
 		</table>
 	</div>
-}
+</ShowLoading>
 </div>
 
 @code

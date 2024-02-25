@@ -5,14 +5,10 @@
 @using System.Linq
 @inject IConfiguration Config
 
+<div class="container">
 <DisplayError Error=Error />
 
-@if(Loading)
-{
-	<p>Loading...</p>
-}
-else
-{
+<ShowLoading Loading=Loading>
 	<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
 	<div>@Item?.ShortDescription</div>
 	<div>@Item?.Details</div>
@@ -37,7 +33,8 @@ else
 			</tr>
 		</table>
 	}
-}
+</ShowLoading>
+</div>
 
 @code
 {

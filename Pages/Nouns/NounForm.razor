@@ -17,12 +17,7 @@
 	</div>
 }
 
-@if(Loading)
-{
-	<p>Loading...</p>
-}
-else
-{
+<ShowLoading Loading=Loading>
 	<h1>
 		@(Editing ? $"Editing {Item.Id}" : "Create")
 	</h1>
@@ -55,7 +50,7 @@ else
 			<button type="submit">Submit</button>
 		</div>
 	</EditForm>
-}
+</ShowLoading>
 
 @code
 {
