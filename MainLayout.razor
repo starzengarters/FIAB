@@ -8,8 +8,7 @@
              DataProvider="SidebarDataProvider" />
 
     <main>
-        <div class="bb-top-row px-4 d-flex justify-content-between">
-            <Icon Name="IconName.List" role="button" @onclick="ToogleSidebar" />
+        <div class="bb-top-row px-4 d-flex justify-content-end">
             <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
         </div>
 
@@ -21,6 +20,10 @@
     </main>
 
 </div>
+
+<Modal IsServiceModal="true" />
+<Preload />
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
 @code {
     private Sidebar sidebar = default!;
@@ -44,6 +47,4 @@
 
         return navItems;
     }
-
-    private void ToogleSidebar() => sidebar.ToggleSidebar();
 }
