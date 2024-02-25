@@ -5,6 +5,7 @@
 @using System.Linq
 @inject IConfiguration Config
 
+<div class="container">
 @if(Error != null)
 {
 	<h1>Aw, snap!</h1>
@@ -15,35 +16,51 @@
 
 @if(Loading)
 {
-	<p>Loading...</p>
+	<div class="row">
+		<div class="offset-4 col-4 mt-4">
+			<Spinner Title="Loading Page" />
+			<span class="align-top ms-1">Loading...</span>
+		</div>
+	</div>
 }
 else
 {
-	<h1>Nouns</h1>
-	<div>
-		<a href="/Nouns/Create">Add a new Noun</a>
-	</div>
 
-	<table border=1>
-		<tr>
-			<th scope="col">Name</th>
-			<th scope="col">Actions</th>
-		</tr>
-		@foreach(var noun in Listing)
-		{
-			<tr>
-				<td>
-					@noun.Name<br/>
-					<span style="font-size: smaller;">@noun.ShortDescription</span>
-				</td>
-				<td>
-					<a href="/Nouns/@noun.Id">View</a>
-					<a href="/Nouns/@noun.Id/Edit">Edit</a>
-				</td>
-			</tr>
-		}
-	</table>
+	<div class="row">
+		<div class="col-8 ps-0">
+			<h1 class="text-start">Nouns</h1>
+		</div>
+		<div class="col-md-4 ps-0">
+			<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
+		</div>
+	</div>
+	<div class="row">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th scope="col" class="col-8">Name</th>
+					<th scope="col" class="col-4">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach(var noun in Listing)
+			{
+				<tr>
+					<td>
+						@noun.Name<br/>
+						<span style="font-size: smaller;">@noun.ShortDescription</span>
+					</td>
+					<td>
+						<a href="/Nouns/@noun.Id">View</a>
+						<a href="/Nouns/@noun.Id/Edit">Edit</a>
+					</td>
+				</tr>
+			}
+			</tbody>
+		</table>
+	</div>
 }
+</div>
 
 @code
 {
