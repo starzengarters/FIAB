@@ -22,7 +22,7 @@
 		@(Editing ? $"Editing {Item.Id}" : "Create")
 	</h1>
 	
-	<EditForm Model="Item" OnSubmit="SubmitForm">
+	<EditForm EditContext="EC" OnSubmit="SubmitForm">
 		<div>
 			<label>
 				Name
@@ -57,6 +57,7 @@
 	[Parameter]
 	public string IdString { get; set; } = string.Empty;
 	private Noun Item = new Noun();
+	private EditContext EC = new EditContext(new Noun());
 	private bool Editing => Item.Id != 0;
 
 	private bool Loading = true;
