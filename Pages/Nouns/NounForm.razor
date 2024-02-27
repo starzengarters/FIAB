@@ -7,13 +7,16 @@
 @using System.Linq
 @inject IConfiguration Config
 
+<div class="container">
 <DisplayError Error=Error />
 
 @if(ShowSuccessMessage)
 {
-	<div>
+	<div class="row">
+		<div class="col">
+			<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+		</div>
 		<strong>Success</strong><br/>
-		<p>@SuccessMessage</p>
 	</div>
 }
 
@@ -23,34 +26,51 @@
 	</h1>
 	
 	<EditForm EditContext="EC" OnSubmit="SubmitForm">
-		<div>
-			<label>
-				Name
-				<InputText @bind-Value=Item.Name />
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("name") class="form-label">
+					Name
+				</label>
+				<InputText @bind-Value=Item.Name id=@GetFormId("name") class="form-control" />
 				<ValidationMessage For=@(() => Item.Name) />
-			</label>
+			</div>
 		</div>
-		<div>
-			<label>
-				Short Description
-				<InputText @bind-Value=Item.ShortDescription />
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("ShortDescription") class="form-label">
+					Short Description
+				</label>
+				<InputText
+					@bind-Value=Item.ShortDescription
+					id=@GetFormId("ShortDescription")
+					class="form-control"
+					placeholder="Short description returned in search results" />
 				<ValidationMessage For=@(() => Item.ShortDescription) />
-			</label>
+			</div>
 		</div>
-		<div>
-			<label>
-				Details
-				<InputTextArea @bind-Value=Item.Details />
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("Details") class="form-label">
+					Details
+				</label>
+				<InputTextArea @bind-Value=Item.Details id=@GetFormId("Details") class="form-control" />
 				<ValidationMessage For=@(() => Item.Details) />
-			</label>
+			</div>
 		</div>
-		<DataAnnotationsValidator/>
-		<ValidationSummary/>
-		<div>
-			<button type="submit">Submit</button>
+		<div class="row mt-3">
+			<div class="col">
+				<DataAnnotationsValidator/>
+				<ValidationSummary/>
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
 		</div>
 	</EditForm>
 </ShowLoading>
+</div>
 
 @code
 {
@@ -64,6 +84,8 @@
 	private Exception? Error;
 	private string SuccessMessage = string.Empty;
 	private bool ShowSuccessMessage = false;
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
