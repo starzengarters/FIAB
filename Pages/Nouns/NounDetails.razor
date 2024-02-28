@@ -9,30 +9,48 @@
 <DisplayError Error=Error />
 
 <ShowLoading Loading=Loading>
-	<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
-	<div>@Item?.ShortDescription</div>
-	<div>@Item?.Details</div>
+	<div class="row">
+		<div class="col">
+			<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
+			<div>@Item?.ShortDescription</div>
+			<div>@Item?.Details</div>
+		</div>
+	</div>
+	<div class="row mt-3">
+		<div class="col">
+			<h2>Relationships (@Relationships.Count)</h2>
+		</div>
+	</div>
 	
-	<h2>Relationships (@Relationships.Count)</h2>
-	@foreach(var rel in Relationships)
-	{
-		<table border="1" style="border: solid 1px gray;">
-			<tr>
-				<td>
-					@rel.Subject.Name
-					<div style="font-size: smaller">@rel.Subject.ShortDescription</div>
-				</td>
-				<td>
-					<strong>@rel.RelationshipType.Name</strong>
-					<div style="font-size: smaller">@rel.Subject.ShortDescription</div>
-				</td>
-				<td>
-					@rel.Object.Name
-					<div style="font-size: smaller">@rel.Object.ShortDescription</div>
-				</td>
-			</tr>
-		</table>
-	}
+	<div class="row row-cols-1 row-cols-lg-3 g-4">
+		
+		@foreach(var rel in Relationships)
+		{
+			<div class="col">
+				<div class="card">
+					<h5 class="card-header">@rel.Subject.Name <span style="font-size: smaller">@rel.Subject.ShortDescription</span></h5>
+					<div class="card-body">
+						<h5 class="card-title">@rel.RelationshipType.Name <span style="font-size: smaller">@rel.RelationshipType.ShortDescription</span></h5>
+						<p class="card-text">@rel.Object.Name <span style="font-size: smaller">@rel.Object.ShortDescription</span></p>
+						
+						@if(rel.Started != null)
+						{
+							<div>
+								<strong>Started: </strong> @(rel.StartedIsApproximate ? "c." : "") @rel.Started
+							</div>
+						}
+
+						@if(rel.Ended != null)
+						{
+							<div>
+								<strong>Ended: </strong> @(rel.EndedIsApproximate ? "c." : "") @rel.Ended
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		}
+	</div>
 </ShowLoading>
 </div>
 
