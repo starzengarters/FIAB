@@ -21,5 +21,7 @@ namespace FIAB.Models
 		public bool StartedIsApproximate { get; set; } = false;
 		public DateOnly? Ended { get; set; }
 		public bool EndedIsApproximate { get; set; } = false;
+
+		// TODO - Add citations list here.
 	}
 }
