@@ -26,29 +26,7 @@
 		
 		@foreach(var rel in Relationships)
 		{
-			<div class="col">
-				<div class="card">
-					<h5 class="card-header">@rel.Subject.Name <span style="font-size: smaller">@rel.Subject.ShortDescription</span></h5>
-					<div class="card-body">
-						<h5 class="card-title">@rel.RelationshipType.Name <span style="font-size: smaller">@rel.RelationshipType.ShortDescription</span></h5>
-						<p class="card-text">@rel.Object.Name <span style="font-size: smaller">@rel.Object.ShortDescription</span></p>
-						
-						@if(rel.Started != null)
-						{
-							<div>
-								<strong>Started: </strong> @(rel.StartedIsApproximate ? "c." : "") @rel.Started
-							</div>
-						}
-
-						@if(rel.Ended != null)
-						{
-							<div>
-								<strong>Ended: </strong> @(rel.EndedIsApproximate ? "c." : "") @rel.Ended
-							</div>
-						}
-					</div>
-				</div>
-			</div>
+			<DisplayRelationship Relationship="rel" />
 		}
 	</div>
 </ShowLoading>
