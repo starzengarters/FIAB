@@ -23,5 +23,9 @@ namespace FIAB.Models
 		public bool EndedIsApproximate { get; set; } = false;
 
 		// TODO - Add citations list here.
+		// TODO allow to "retire" a relationship in 2 ways
+		// 1.) A "refutation" where you detail why it was delted.
+		// 2.) A "I was just wrong/Bad data entry"
+		// Maybe it should allow a true deletion, too.
 	}
 }
