@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FIAB.Models
 {
@@ -14,8 +15,14 @@ namespace FIAB.Models
 		[Required]
 		public required RelationshipType RelationshipType { get; set; }
 
+		[ForeignKey(nameof(RelationshipType))]
+		public int RelationshipTypeId { get; set; }
+
 		[Required]
 		public required Noun Object { get; set; }
+
+		[ForeignKey(nameof(Object))]
+		public int ObjectId { get; set; }
 
 		public DateOnly? Started { get; set; }
 		public bool StartedIsApproximate { get; set; } = false;
