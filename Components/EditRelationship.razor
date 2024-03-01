@@ -1,0 +1,45 @@
+@using FIAB.Models
+
+<div class="col">
+	<div class="card">
+		<h5 class="card-header">@Relationship.Subject.Name <span style="font-size: smaller">@Relationship.Subject.ShortDescription</span></h5>
+		<div class="card-body">
+			<h5 class="card-title">@Relationship.RelationshipType.Name <span style="font-size: smaller">@Relationship.RelationshipType.ShortDescription</span></h5>
+			<p class="card-text">@Relationship.Object.Name <span style="font-size: smaller">@Relationship.Object.ShortDescription</span></p>
+			
+			@if(Relationship.Started != null)
+			{
+				<div>
+					<strong>Started: </strong> @(Relationship.StartedIsApproximate ? "c." : "") @Relationship.Started
+				</div>
+			}
+
+			@if(Relationship.Ended != null)
+			{
+				<div>
+					<strong>Ended: </strong> @(Relationship.EndedIsApproximate ? "c." : "") @Relationship.Ended
+				</div>
+			}
+
+			
+		</div>
+		<div class="card-footer d-grid gap-2 d-md-flex justify-content-md-end">
+			<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=OnCancel>Cancel</Button>
+		</div>
+	</div>
+</div>
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public Relationship Relationship { get; set; } = default!;
+	@*TODO make another view for editing relationships.
+	  Use it to drive an "add relationship" card in NounDetails
+	  Add an "edit" toggle to this component that flips it to the edit component.
+	*@
+
+	[Parameter]
+	[EditorRequired]
+	public Action OnCancel { get; set; } = default!;
+}
