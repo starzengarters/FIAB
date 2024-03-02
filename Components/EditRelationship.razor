@@ -8,15 +8,13 @@
 <div class="col">
 	<div class="card">
 		<h5 class="card-header">@Relationship.Subject.Name <span style="font-size: smaller">@Relationship.Subject.ShortDescription</span></h5>
-		<div class="card-body">
 		@if(FormRelationship != null)
 		{
-			
+		<EditForm EditContext="EC" OnSubmit="SubmitForm">
+		<div class="card-body">	
 			<div class="container-fluid">
 				<DisplayError Error=Error />
 				<ShowLoading Loading=Loading>
-				<EditForm EditContext="EC" OnSubmit="SubmitForm">
-				
 				<div class="row">
 					<div class="col">
 						<label for=@GetFormId("RelationshipType") class="form-label">
@@ -36,8 +34,6 @@
 				</div>
 				<div class="row">
 					<div class="col">
-						<p class="card-text">@FormRelationship.RelationshipTypeId @FormRelationship.RelationshipType.Name <span style="font-size: smaller">@FormRelationship.RelationshipType.ShortDescription</span></p>
-
 						<label for=@GetFormId("Object") class="form-label">
 							Object
 						</label>
@@ -53,25 +49,41 @@
 						@* TODO - Provision for adding a new Object here, inline. *@
 					</div>
 				</div>
-				</EditForm>
+				<div class="row">
+					<div class="col">
+						@if(FormRelationship.Started != null)
+						{
+							<label for=@GetFormId("Started") class="form-label">
+								Started
+							</label>
+							<DateInput id=@GetFormId("Started") TValue="DateOnly?" @bind-Value="@FormRelationship.Started" Placeholder="(optional)" />
+							<Switch @bind-Value="FormRelationship.StartedIsApproximate" Label="Start Date is approximate" />
+						}
+						else
+						{
+							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=InitStartDate>Add Start Date</Button>
+						}
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						@if(FormRelationship.Ended != null)
+						{
+							<label for=@GetFormId("Ended") class="form-label">
+								Ended
+							</label>
+							<DateInput id=@GetFormId("Ended") TValue="DateOnly?" @bind-Value="@FormRelationship.Ended" Placeholder="(optional)" />
+							<Switch @bind-Value="FormRelationship.EndedIsApproximate" Label="End Date is approximate" />
+						}
+						else
+						{
+							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=SubmitForm>Add End Date</Button>
+						}
+					</div>
+				</div>
+				
 				</ShowLoading>
 			</div>
-
-			
-			@if(FormRelationship.Started != null)
-			{
-				<div>
-					<strong>Started: </strong> @(FormRelationship.StartedIsApproximate ? "c." : "") @FormRelationship.Started
-				</div>
-			}
-
-			@if(FormRelationship.Ended != null)
-			{
-				<div>
-					<strong>Ended: </strong> @(FormRelationship.EndedIsApproximate ? "c." : "") @FormRelationship.Ended
-				</div>
-			}
-		}	
 		</div>
 		<div class="card-footer d-grid gap-2 d-md-flex justify-content-md-end">
 			@if(FormIsDirty)
@@ -79,7 +91,11 @@
 				<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=ResetForm>Reset</Button>@*Make a ComfirmReset component.*@
 			}
 			<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+
+			<Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Size="Size.Small" Outline="true" class="card-link">Submit</Button>
 		</div>
+		</EditForm>
+		}
 	</div>
 </div>
 
@@ -144,7 +160,6 @@
 
 	public void Dispose()
 	{
-		Console.WriteLine("Goodbye.");
 	}
 
 	private void ResetForm()
@@ -165,6 +180,22 @@
 		FormIsDirty = false;
 
 		StateHasChanged();
+	}
+
+	private void InitStartDate()
+	{
+		if(FormRelationship != null)
+		{
+			FormRelationship.Started = new DateOnly();
+		}
+	}
+
+	private void InitEndDate()
+	{
+		if(FormRelationship != null)
+		{
+			FormRelationship.Ended = new DateOnly();
+		}
 	}
 
 	private async Task SetRelationshipTypes()
@@ -195,6 +226,7 @@
 
 	private async Task SubmitForm()
 	{
+		Console.WriteLine("From SubmitForm().");
 		await Task.CompletedTask;
 		throw new NotImplementedException();
 	}
