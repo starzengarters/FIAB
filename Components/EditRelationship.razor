@@ -1,30 +1,84 @@
-@using FIAB.Models
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms;
+@using Microsoft.EntityFrameworkCore;
+@implements IDisposable;
+@inject IConfiguration Config;
 
 <div class="col">
 	<div class="card">
 		<h5 class="card-header">@Relationship.Subject.Name <span style="font-size: smaller">@Relationship.Subject.ShortDescription</span></h5>
 		<div class="card-body">
-			<h5 class="card-title">@Relationship.RelationshipType.Name <span style="font-size: smaller">@Relationship.RelationshipType.ShortDescription</span></h5>
-			<p class="card-text">@Relationship.Object.Name <span style="font-size: smaller">@Relationship.Object.ShortDescription</span></p>
+		@if(FormRelationship != null)
+		{
 			
-			@if(Relationship.Started != null)
+			<div class="container-fluid">
+				<DisplayError Error=Error />
+				<ShowLoading Loading=Loading>
+				<EditForm EditContext="EC" OnSubmit="SubmitForm">
+				
+				<div class="row">
+					<div class="col">
+						<label for=@GetFormId("RelationshipType") class="form-label">
+							Relationship Type
+						</label>
+						<InputSelect class="form-select" id=@GetFormId("RelationshipType") @bind-Value=FormRelationship.RelationshipTypeId>
+						@* TODO - Do recursion and indentation for parent child relationships. *@
+							<option value="0"></option>
+						@foreach(var relType in RelationshipTypes)
+						{
+							<option value="@relType.Id">@relType.Name</option>
+							@* TODO - Show the value of relType.ShortDescription*@
+						}
+						</InputSelect>
+						@* TODO - Provision for adding a new RelationshipType here, inline. *@
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<p class="card-text">@FormRelationship.RelationshipTypeId @FormRelationship.RelationshipType.Name <span style="font-size: smaller">@FormRelationship.RelationshipType.ShortDescription</span></p>
+
+						<label for=@GetFormId("Object") class="form-label">
+							Object
+						</label>
+						<InputSelect class="form-select" id=@GetFormId("Object") @bind-Value=FormRelationship.ObjectId>
+						@* TODO - Do recursion and indentation for parent child relationships. *@
+							<option value="0"></option>
+						@foreach(var obj in Objects)
+						{
+							<option value="@obj.Id">@obj.Name</option>
+							@* TODO - Show the value of obj.ShortDescription*@
+						}
+						</InputSelect>
+						@* TODO - Provision for adding a new Object here, inline. *@
+					</div>
+				</div>
+				</EditForm>
+				</ShowLoading>
+			</div>
+
+			
+			@if(FormRelationship.Started != null)
 			{
 				<div>
-					<strong>Started: </strong> @(Relationship.StartedIsApproximate ? "c." : "") @Relationship.Started
+					<strong>Started: </strong> @(FormRelationship.StartedIsApproximate ? "c." : "") @FormRelationship.Started
 				</div>
 			}
 
-			@if(Relationship.Ended != null)
+			@if(FormRelationship.Ended != null)
 			{
 				<div>
-					<strong>Ended: </strong> @(Relationship.EndedIsApproximate ? "c." : "") @Relationship.Ended
+					<strong>Ended: </strong> @(FormRelationship.EndedIsApproximate ? "c." : "") @FormRelationship.Ended
 				</div>
 			}
-
-			
+		}	
 		</div>
 		<div class="card-footer d-grid gap-2 d-md-flex justify-content-md-end">
-			<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=OnCancel>Cancel</Button>
+			@if(FormIsDirty)
+			{
+				<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=ResetForm>Reset</Button>@*Make a ComfirmReset component.*@
+			}
+			<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
 		</div>
 	</div>
 </div>
@@ -34,12 +88,114 @@
 	[Parameter]
 	[EditorRequired]
 	public Relationship Relationship { get; set; } = default!;
-	@*TODO make another view for editing relationships.
-	  Use it to drive an "add relationship" card in NounDetails
-	  Add an "edit" toggle to this component that flips it to the edit component.
-	*@
 
 	[Parameter]
 	[EditorRequired]
 	public Action OnCancel { get; set; } = default!;
+
+	[Parameter]
+	public IEnumerable<RelationshipType> RelationshipTypes { get; set; } = new List<RelationshipType>();
+	
+	[Parameter]
+	public IEnumerable<Noun> Objects { get; set;} = new List<Noun>();
+	
+	private bool Loading = true;
+	private Relationship? FormRelationship = null!;
+	private bool FormIsDirty = false;
+	private Exception? Error;
+
+	private EditContext EC = new EditContext(new Relationship { Subject = default!, RelationshipType = default!, Object = default! });
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				// Copy the parameter relationship into a "working" copy to edit.
+				// We can work with it, reset it to the original value,
+				// and set the paremeter value to it upon a successful edit.
+				
+				// Yes, this is ugly, will beautify later.
+				ResetForm();
+
+				// Set FormIsDirty on any change.
+				EC.OnFieldChanged += (sender, args) => FormIsDirty = true;
+
+				var tasks = new List<Task>();
+				tasks.Add(SetRelationshipTypes());
+				tasks.Add(SetObjects());
+
+				await Task.WhenAll(tasks);
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	public void Dispose()
+	{
+		Console.WriteLine("Goodbye.");
+	}
+
+	private void ResetForm()
+	{
+		FormRelationship = new Relationship {
+			Id = Relationship.Id,
+			Subject = Relationship.Subject,
+			RelationshipType = Relationship.RelationshipType,
+			RelationshipTypeId = Relationship.RelationshipTypeId,
+			Object = Relationship.Object,
+			ObjectId = Relationship.ObjectId,
+			Started = Relationship.Started,
+			StartedIsApproximate = Relationship.StartedIsApproximate,
+			Ended = Relationship.Ended,
+			EndedIsApproximate = Relationship.EndedIsApproximate
+		};
+
+		FormIsDirty = false;
+
+		StateHasChanged();
+	}
+
+	private async Task SetRelationshipTypes()
+	{
+		if(RelationshipTypes.Count() == 0)
+		{
+			using var context = FIABContext.Create(Config);
+			RelationshipTypes = await context.RelationshipTypes.ToListAsync();// TODO this is horrifying and WILL blow-up at scale.  Need a searchable, streamable solution.
+		}
+	}
+
+	private async Task SetObjects()
+	{
+		if(Objects.Count() == 0)
+		{
+			using var context = FIABContext.Create(Config);
+			Objects = await context.Nouns
+				.Where(n => n.Id != Relationship.Subject.Id)// Self-Reference loops are bad.
+				.ToListAsync();// TODO just like RelationshipTypes this is a lit bomb with a very short fuse.
+		}
+	}
+
+	private async Task CancelClicked()
+	{
+		OnCancel();
+		await Task.CompletedTask;
+	}
+
+	private async Task SubmitForm()
+	{
+		await Task.CompletedTask;
+		throw new NotImplementedException();
+	}
 }
