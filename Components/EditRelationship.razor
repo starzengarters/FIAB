@@ -116,10 +116,6 @@
 
 	[Parameter]
 	[EditorRequired]
-	public Action<Relationship> OnSuccess { get; set; } = default!;
-
-	[Parameter]
-	[EditorRequired]
 	public Action OnCancel { get; set; } = default!;
 
 	[Parameter]
@@ -255,7 +251,6 @@
 			{
 				// TODO - Never use <InputSelect /> again.
 				// Since <InputSelect /> only updates the id property make sure the full-fat property matches its id
-				Console.WriteLine($"\t {FormRelationship.RelationshipTypeId}:{FormRelationship.RelationshipType?.Id}:{FormRelationship.RelationshipType?.Name}");
 				// null-forgiveness because DB validation gives free error messages.
 				FormRelationship.RelationshipType = RelationshipTypes.SingleOrDefault(rt => rt.Id == FormRelationship.RelationshipTypeId)!;
 				FormRelationship.Object = Objects.SingleOrDefault(o => o.Id == FormRelationship.ObjectId)!;
@@ -275,13 +270,6 @@
 				}
 
 				// Now that FormRelationship is saved, update the Relationship that was passed-in.
-				
-				
-				//Relationship = FormRelationship;
-				//ResetForm();
-
-				//OnSuccess.Invoke(FormRelationship);
-
 				FormRelationship.DeepCopy(Relationship);
 			}
 		}
