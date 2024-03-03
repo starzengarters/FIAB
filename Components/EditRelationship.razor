@@ -14,6 +14,15 @@
 		<div class="card-body">	
 			<div class="container-fluid">
 				<DisplayError Error=Error />
+				@if(ShowSuccessMessage)
+				{
+					<div class="row">
+						<div class="col">
+							<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+						</div>
+						<strong>Success</strong><br/>
+					</div>
+				}
 				<ShowLoading Loading=Loading>
 				<div class="row">
 					<div class="col">
@@ -107,6 +116,10 @@
 
 	[Parameter]
 	[EditorRequired]
+	public Action<Relationship> OnSuccess { get; set; } = default!;
+
+	[Parameter]
+	[EditorRequired]
 	public Action OnCancel { get; set; } = default!;
 
 	[Parameter]
@@ -119,6 +132,10 @@
 	private Relationship? FormRelationship = null!;
 	private bool FormIsDirty = false;
 	private Exception? Error;
+
+	private bool Editing => Relationship.Id > 0;
+	private string SuccessMessage = string.Empty;
+	private bool ShowSuccessMessage = false;
 
 	private EditContext EC = new EditContext(new Relationship { Subject = default!, RelationshipType = default!, Object = default! });
 	private string FormId = System.Guid.NewGuid().ToString();
@@ -164,18 +181,9 @@
 
 	private void ResetForm()
 	{
-		FormRelationship = new Relationship {
-			Id = Relationship.Id,
-			Subject = Relationship.Subject,
-			RelationshipType = Relationship.RelationshipType,
-			RelationshipTypeId = Relationship.RelationshipTypeId,
-			Object = Relationship.Object,
-			ObjectId = Relationship.ObjectId,
-			Started = Relationship.Started,
-			StartedIsApproximate = Relationship.StartedIsApproximate,
-			Ended = Relationship.Ended,
-			EndedIsApproximate = Relationship.EndedIsApproximate
-		};
+		// Might need to initialize FormRelationship here.
+		FormRelationship = new Relationship { Subject = null!, RelationshipType = null!, Object = null! };
+		Relationship.DeepCopy(FormRelationship!);
 
 		FormIsDirty = false;
 
@@ -220,14 +228,76 @@
 
 	private async Task CancelClicked()
 	{
-		OnCancel();
+		OnCancel.Invoke();
 		await Task.CompletedTask;
+	}
+
+	private async Task ShowSuccess(string message, int seconds = 5)
+	{
+		// TODO spice this up as a component that uses cancellationTokens.
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+
+		await Task.Delay(seconds * 1000);
+		ShowSuccessMessage = false;
 	}
 
 	private async Task SubmitForm()
 	{
-		Console.WriteLine("From SubmitForm().");
-		await Task.CompletedTask;
-		throw new NotImplementedException();
+		var encounteredError = false;
+		try
+		{
+			Error = null;
+			Loading = true;
+			using var context = FIABContext.Create(Config);
+
+			if(FormRelationship != null)
+			{
+				// TODO - Never use <InputSelect /> again.
+				// Since <InputSelect /> only updates the id property make sure the full-fat property matches its id
+				Console.WriteLine($"\t {FormRelationship.RelationshipTypeId}:{FormRelationship.RelationshipType?.Id}:{FormRelationship.RelationshipType?.Name}");
+				// null-forgiveness because DB validation gives free error messages.
+				FormRelationship.RelationshipType = RelationshipTypes.SingleOrDefault(rt => rt.Id == FormRelationship.RelationshipTypeId)!;
+				FormRelationship.Object = Objects.SingleOrDefault(o => o.Id == FormRelationship.ObjectId)!;
+				
+
+				if(Editing)
+				{
+					context.Attach(FormRelationship);
+					context.Update(FormRelationship);
+					await context.SaveChangesAsync();
+				}
+				else
+				{
+					await context.Relationships.AddAsync(FormRelationship);
+					await context.SaveChangesAsync();
+					
+				}
+
+				// Now that FormRelationship is saved, update the Relationship that was passed-in.
+				
+				
+				//Relationship = FormRelationship;
+				//ResetForm();
+
+				//OnSuccess.Invoke(FormRelationship);
+
+				FormRelationship.DeepCopy(Relationship);
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			encounteredError = true;
+		}
+		finally
+		{
+			Loading = false;
+
+			if(!encounteredError)
+			{
+				OnCancel.Invoke();// Close and render updated data.
+			}
+		}
 	}
 }

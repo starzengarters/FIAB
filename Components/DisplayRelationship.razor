@@ -1,7 +1,7 @@
 @using FIAB.Models
 @if(CanEdit && Editing)
 {
-	<EditRelationship Relationship=Relationship OnCancel=ToggleEditing />
+	<EditRelationship Relationship=Relationship OnSuccess=UpdateRelationship OnCancel=ToggleEditing />
 }
 else
 {
@@ -51,5 +51,17 @@ else
 	[Parameter]
 	public bool Editing { get; set; } = false;
 
-	private void ToggleEditing() => Editing = !Editing;
+	private void ToggleEditing()
+	{
+		Editing = !Editing;
+		StateHasChanged();
+		Console.WriteLine($"\tLeaving ToggleEditing.");
+	}
+
+	private void UpdateRelationship(Relationship input)
+	{
+		Relationship = input;
+		StateHasChanged();
+		Console.WriteLine($"\tLeaving UpdateRelationship.");
+	}
 }

@@ -34,5 +34,23 @@ namespace FIAB.Models
 		// 1.) A "refutation" where you detail why it was delted.
 		// 2.) A "I was just wrong/Bad data entry"
 		// Maybe it should allow a true deletion, too.
+
+		/// <summary>
+		/// Copies the contents of this Relationship into the provied input.
+		/// </summary>
+		/// <param name="input">The relationship to update the value of.</param>
+		public void DeepCopy(Relationship input)
+		{
+			input.Id = this.Id;
+			input.Subject = this.Subject;
+			input.RelationshipType = this.RelationshipType;
+			input.RelationshipTypeId = this.RelationshipTypeId;
+			input.Object = this.Object;
+			input.ObjectId = this.ObjectId;
+			input.Started = this.Started;
+			input.StartedIsApproximate = this.StartedIsApproximate;
+			input.Ended = this.Ended;
+			input.EndedIsApproximate = this.EndedIsApproximate;
+		}
 	}
 }
