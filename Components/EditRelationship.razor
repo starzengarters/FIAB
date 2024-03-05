@@ -139,35 +139,65 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		try
+		
+		if(firstRender)
 		{
-			if(firstRender)
+			try
 			{
-				// Copy the parameter relationship into a "working" copy to edit.
-				// We can work with it, reset it to the original value,
-				// and set the paremeter value to it upon a successful edit.
+			// YOU ARE HERE
+			// Chasing your tail
+			// Trying to figure out why the reset button was drawn too often before,
+			// but now is not ever being drawn.
+
+			// Set FormIsDirty on any change.
+			EC.OnFieldChanged += (sender, args) => {
+				//Console.WriteLine($"Field changed. ({args.FieldIdentifier.FieldName})");
 				
-				// Yes, this is ugly, will beautify later.
-				ResetForm();
+				// there is a bug where Blazor Bootstrap date inputs instantly make the form dirty.
+				// Only become dirty for those entries if the value has truly changed.
+				if(args.FieldIdentifier.FieldName == nameof(FormRelationship.Started))
+				{
+					if(Relationship.Started != FormRelationship?.Started)
+					{
+						FormIsDirty = true;
+					}
+				}
+				else if(args.FieldIdentifier.FieldName == nameof(FormRelationship.Ended))
+				{
+					if(Relationship.Ended != FormRelationship?.Ended)
+					{
+						FormIsDirty = true;
+					}
+				}
+				else
+				{
+					FormIsDirty = true;
+				}
+				
+				StateHasChanged();
+			};
 
-				// Set FormIsDirty on any change.
-				EC.OnFieldChanged += (sender, args) => FormIsDirty = true;
+			// Copy the parameter relationship into a "working" copy to edit.
+			// We can work with it, reset it to the original value,
+			// and set the paremeter value to it upon a successful edit.
+			ResetForm();
 
-				var tasks = new List<Task>();
-				tasks.Add(SetRelationshipTypes());
-				tasks.Add(SetObjects());
+			var tasks = new List<Task>();
+			tasks.Add(SetRelationshipTypes());
+			tasks.Add(SetObjects());
 
-				await Task.WhenAll(tasks);
+			await Task.WhenAll(tasks);
 			}
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-		}
-		finally
-		{
-			Loading = false;
-			StateHasChanged();
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				FormIsDirty = false;// This bit gets flipped unexpectedly.
+				StateHasChanged();
+			}
 		}
 	}
 
