@@ -7,7 +7,7 @@
 
 <div class="col">
 	<div class="card">
-		<h5 class="card-header">@Relationship.Subject.Name <span style="font-size: smaller">@Relationship.Subject.ShortDescription</span></h5>
+		<h5 class="card-header">@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span></h5>
 		@if(FormRelationship != null)
 		{
 		<EditForm EditContext="EC" OnSubmit="SubmitForm">
@@ -248,7 +248,7 @@
 		{
 			using var context = FIABContext.Create(Config);
 			Objects = await context.Nouns
-				.Where(n => n.Id != Relationship.Subject.Id)// Self-Reference loops are bad.
+				.Where(n => Relationship.Subject != null && n.Id != Relationship.Subject.Id)// Self-Reference loops are bad.
 				.ToListAsync();// TODO just like RelationshipTypes this is a lit bomb with a very short fuse.
 		}
 	}

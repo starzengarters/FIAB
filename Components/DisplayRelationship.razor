@@ -8,12 +8,12 @@ else
 	<div class="col">
 		<div class="card">
 			<h5 class="card-header">
-				@Relationship.Subject.Name <span style="font-size: smaller">@Relationship.Subject.ShortDescription</span>
+				@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span>
 				
 			</h5>
 			<div class="card-body">
-				<h5 class="card-title">@Relationship.RelationshipType.Name <span style="font-size: smaller">@Relationship.RelationshipType.ShortDescription</span></h5>
-				<p class="card-text">@Relationship.Object.Name <span style="font-size: smaller">@Relationship.Object.ShortDescription</span></p>
+				<h5 class="card-title">@Relationship.RelationshipType?.Name <span style="font-size: smaller">@Relationship.RelationshipType?.ShortDescription</span></h5>
+				<p class="card-text">@Relationship.Object?.Name <span style="font-size: smaller">@Relationship.Object?.ShortDescription</span></p>
 				
 				@if(Relationship.Started != null)
 				{
