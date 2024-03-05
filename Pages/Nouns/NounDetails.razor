@@ -20,10 +20,16 @@
 		<div class="col">
 			<h2>Relationships (@Relationships.Count)</h2>
 		</div>
+		<div class="col">
+			<Button Color="ButtonColor.Primary" Size="Size.Large" Outline="true" Disabled=AddingRelationship @onclick=ShowAddRelationship>Add Relationship</Button>
+		</div>
 	</div>
 	
 	<div class="row row-cols-1 row-cols-lg-3 g-4">
-		
+		@if(AddingRelationship)
+		{
+			<EditRelationship Relationship=RelationshipToAdd OnCancel=HideAddRelationship />
+		}
 		@foreach(var rel in Relationships)
 		{
 			<DisplayRelationship Relationship="rel" CanEdit="true" />
@@ -42,6 +48,36 @@
 	private Exception? Error;
 	private Noun? Item;
 	private List<Relationship> Relationships = new List<Relationship>();
+
+	private bool AddingRelationship = false;
+	private Relationship RelationshipToAdd = new Relationship();
+	private void ShowAddRelationship()
+	{
+		RelationshipToAdd = new Relationship { Subject = Item };
+		AddingRelationship = true;
+	}
+
+	private async Task _HideAddRelationship()
+	{
+		try
+		{
+			Loading = true;
+			StateHasChanged();
+
+			await SetRelationships();
+			AddingRelationship = false;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private void HideAddRelationship()
+	{
+		_HideAddRelationship();
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

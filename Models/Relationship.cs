@@ -10,16 +10,16 @@ namespace FIAB.Models
 	public class Relationship : Entity
 	{
 		[Required]
-		public required Noun Subject { get; set; }
+		public Noun? Subject { get; set; }
 
 		[Required]
-		public required RelationshipType RelationshipType { get; set; }
+		public RelationshipType? RelationshipType { get; set; }
 
 		[ForeignKey(nameof(RelationshipType))]
 		public int RelationshipTypeId { get; set; }
 
 		[Required]
-		public required Noun Object { get; set; }
+		public Noun? Object { get; set; }
 
 		[ForeignKey(nameof(Object))]
 		public int ObjectId { get; set; }

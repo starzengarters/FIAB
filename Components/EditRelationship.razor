@@ -86,7 +86,7 @@
 						}
 						else
 						{
-							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=SubmitForm>Add End Date</Button>
+							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=InitEndDate>Add End Date</Button>
 						}
 					</div>
 				</div>
@@ -295,9 +295,17 @@
 				}
 				else
 				{
+					// It keeps trying to add the Subject and Object as new entities.
+					// I guess take the time to get the official versions from the DB?
+					if(FormRelationship.Subject != null)
+						FormRelationship.Subject = await context.Nouns.SingleAsync(n => n.Id == FormRelationship.Subject.Id);
+					if(FormRelationship.RelationshipType != null)
+						FormRelationship.RelationshipType = await context.RelationshipTypes.SingleAsync(n => n.Id == FormRelationship.RelationshipType.Id);
+					if(FormRelationship.Object != null)
+						FormRelationship.Object = await context.Nouns.SingleAsync(n => n.Id == FormRelationship.Object.Id);
+
 					await context.Relationships.AddAsync(FormRelationship);
 					await context.SaveChangesAsync();
-					
 				}
 
 				// Now that FormRelationship is saved, update the Relationship that was passed-in.
@@ -317,6 +325,8 @@
 			{
 				OnCancel.Invoke();// Close and render updated data.
 			}
+			
+			StateHasChanged();
 		}
 	}
 }
