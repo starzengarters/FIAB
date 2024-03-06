@@ -54,7 +54,7 @@
 					Parent Relationship Type
 				</label>
 				<SelectRelationship
-					Input=Item.Parent
+					@bind-Value=Item.Parent
 					Options=PossibleParents
 					Id=@GetFormId("Parent") />
 				<ValidationMessage For=@(() => Item.Parent) />
@@ -137,7 +137,9 @@
 	private async Task SetItem(int id)
 	{
 		using var context = GetContext();
-		Item = await context.RelationshipTypes.SingleAsync(n => n.Id == id);
+		Item = await context.RelationshipTypes
+			.Include(n => n.Parent)
+			.SingleAsync(n => n.Id == id);
 	}
 
 	private async Task SetPossibleParents(int id)

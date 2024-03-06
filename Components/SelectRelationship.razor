@@ -2,7 +2,14 @@
 @using Microsoft.AspNetCore.Components.Forms
 @namespace FIAB.Components
 
-<InputSelect class="form-select" id=@Id @bind-Value=InputId @attributes=InputAttributes>
+<InputSelect
+	class="form-select"
+	id=@Id
+	@attributes=InputAttributes
+	Value="@Backing.Id"
+	ValueExpression="@(() => Backing.Id)"
+	ValueChanged="@((int e) => Bleh(e))"
+	>
 @* TODO - Do recursion and indentation for parent child relationships. *@
 	<option value="0"></option>
 @foreach(var relType in Options)
@@ -11,27 +18,20 @@
 	@* TODO - Show the value of relType.ShortDescription*@
 }
 </InputSelect>
-<p>InputId: @InputId Input: @Input?.Id @Input?.Name - @Input?.ShortDescription</p>
+<p>InputId: @Backing.Id Input: @Value?.Id @Value?.Name - @Value?.ShortDescription</p>
 @code
 {
 	[Parameter]
 	[EditorRequired]
-	public RelationshipType? Input { get; set; }
+	public RelationshipType? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<RelationshipType> ValueChanged { get; set; }
 
 	// A kind of "backing" value for the InputSelect shenanigans.
 	// The getter just reads Input.Id
 	// The setter invokes a method that updates Input
-	private int? InputId
-	{ 
-		get => Input?.Id;
-		set
-		{
-			// Only update the parameter value if it has changed
-			if(Input?.Id != value)
-				Console.Write($"\n{Input?.Id} vs. {value} ");
-				Bleh(value);
-		}
-	}
+	private RelationshipType Backing { get; set;} = new RelationshipType();
 
 	[Parameter]
 	[EditorRequired]
@@ -46,15 +46,17 @@
 	protected override void OnParametersSet()
 	{
 		// Only update the backing value if it has changed
-		if(InputId != Input?.Id)
-			InputId = Input?.Id;
+		if(Backing.Id != Value?.Id)
+			Backing.Id = Value?.Id ?? 0;
 	}
 
-	private void Bleh(int? id)
+	private async Task Bleh(int id)
 	{
 		Console.WriteLine($"Hello from Bleh({id})");
-		//Input = Options.SingleOrDefault(o => o.Id == id);
-		Console.WriteLine($"\tInput: {Input?.Id} - {Input?.Name}");
+		var newValue = Options.SingleOrDefault(o => o.Id == id);
+		Console.WriteLine($"\tInput: {Value?.Id} - {Value?.Name}");
+		await ValueChanged.InvokeAsync(newValue);
+		Backing.Id = id;
 		StateHasChanged();
 	}
 }
