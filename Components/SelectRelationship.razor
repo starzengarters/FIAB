@@ -52,11 +52,9 @@
 
 	private async Task Bleh(int id)
 	{
-		Console.WriteLine($"Hello from Bleh({id})");
 		var newValue = Options.SingleOrDefault(o => o.Id == id);
-		Console.WriteLine($"\tInput: {Value?.Id} - {Value?.Name}");
 		await ValueChanged.InvokeAsync(newValue);
-		Backing.Id = id;
+		// Backing.Id = id;
 		StateHasChanged();
 	}
 }
