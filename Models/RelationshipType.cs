@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FIAB.Models
 {
@@ -19,6 +20,9 @@ namespace FIAB.Models
 		/// The parent RelationshipType. Eg. "Sole Inventor" and "Co-Inventor" would probably both have a parent "Inventor"
 		/// </summary>
 		public RelationshipType? Parent { get; set; }
+
+		[ForeignKey(nameof(Parent))]
+		public int ParentId { get; set; }
 
 		public string? Details { get; set; }
 	}
