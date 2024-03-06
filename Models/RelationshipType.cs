@@ -22,7 +22,7 @@ namespace FIAB.Models
 		public RelationshipType? Parent { get; set; }
 
 		[ForeignKey(nameof(Parent))]
-		public int ParentId { get; set; }
+		public int? ParentId { get; set; }
 
 		public string? Details { get; set; }
 	}
