@@ -175,6 +175,13 @@
 			{
 				context.Attach(Item);
 				context.Update(Item);
+				
+				// TODO - figure out why saving non-null values works, but setting null values don't stick.
+				// This if statement works, but I resent having to do it.
+				// I guess once it's hidden in a service I won't hate it so much.
+				if(Item.Parent == null)
+					Item.ParentId = null;
+				
 				await context.SaveChangesAsync();
 			}
 			else
