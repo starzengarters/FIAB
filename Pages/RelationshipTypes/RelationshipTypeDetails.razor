@@ -58,9 +58,17 @@
 		}
 	}
 
+	// Makes browsing to another RelationshipType work(Eg. Links to Parent)
+	protected override async Task OnParametersSetAsync()
+	{
+		await OnAfterRenderAsync(true);
+	}
+
 	private async Task SetItem()
 	{
 		using var context = FIABContext.Create(Config);
-		Item = await context.RelationshipTypes.SingleAsync(n => n.Id == Id);
+		Item = await context.RelationshipTypes
+			.Include(n => n.Parent)
+			.SingleAsync(n => n.Id == Id);
 	}
 }
