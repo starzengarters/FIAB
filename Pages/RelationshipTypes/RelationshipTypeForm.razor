@@ -1,5 +1,5 @@
-@page "/Nouns/Create"
-@page "/Nouns/{IdString}/Edit"
+@page "/RelationshipTypes/Create"
+@page "/RelationshipTypes/{IdString}/Edit"
 @using FIAB.Models;
 @using FIAB.Contexts;
 @using Microsoft.AspNetCore.Components.Forms
@@ -50,6 +50,20 @@
 		</div>
 		<div class="row mt-3">
 			<div class="col">
+				<label for=@GetFormId("Parent") class="form-label">
+					Short Description
+				</label>
+				@* <InputText
+					@bind-Value=Item.Parent
+					id=@GetFormId("Parent")
+					class="form-control"
+					placeholder="Short description returned in search results" /> *@
+				<span>TBD</span>
+				<ValidationMessage For=@(() => Item.Parent) />
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
 				<label for=@GetFormId("Details") class="form-label">
 					Details
 				</label>
@@ -76,8 +90,9 @@
 {
 	[Parameter]
 	public string IdString { get; set; } = string.Empty;
-	private Noun Item = new Noun();
-	private EditContext EC = new EditContext(new Noun());
+	private RelationshipType Item = new RelationshipType();
+	private List<RelationshipType> PossibleParents = new List<RelationshipType>();
+	private EditContext EC = new EditContext(new RelationshipType());
 	private bool Editing => Item.Id != 0;
 
 	private bool Loading = true;
@@ -96,10 +111,13 @@
 				int id = 0;
 				int.TryParse(IdString, out id);
 				
+				var tasks = new List<Task> { SetPossibleParents(id) };
 				if(id != 0)
 				{
-					await SetItem(id);
+					tasks.Add(SetItem(id));
 				}
+
+				await Task.WhenAll(tasks);
 			}
 		}
 		catch(Exception ex)
@@ -121,7 +139,17 @@
 	private async Task SetItem(int id)
 	{
 		using var context = GetContext();
-		Item = await context.Nouns.SingleAsync(n => n.Id == id);
+		Item = await context.RelationshipTypes.SingleAsync(n => n.Id == id);
+	}
+
+	private async Task SetPossibleParents(int id)
+	{
+		using var context = GetContext();
+		PossibleParents = await context.RelationshipTypes
+			.Where(rt => rt.Id != id)// No self-references!
+			.OrderBy(r => r.Parent!.Name)
+			.ThenBy(r => r.Name)
+			.ToListAsync();
 	}
 
 	private async Task ShowSuccess(string message, int seconds = 5)
@@ -151,7 +179,7 @@
 			}
 			else
 			{
-				await context.Nouns.AddAsync(Item);
+				await context.RelationshipTypes.AddAsync(Item);
 				await context.SaveChangesAsync();
 				
 			}
@@ -169,7 +197,7 @@
 			if(!encounteredError)
 			{
 				var action = Editing ? "edited" : "created";
-				await ShowSuccess($"{DateTime.Now} Noun {Item.Id} {action}.");
+				await ShowSuccess($"{DateTime.Now} Relationship Type {Item.Id} {action}.");
 			}
 		}
 	}

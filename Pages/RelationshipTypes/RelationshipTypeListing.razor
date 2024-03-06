@@ -1,0 +1,81 @@
+@page "/RelationshipTypes"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+
+<DisplayError Error=Error />
+<ShowLoading Loading=Loading>
+	<div class="row">
+		<div class="col-8 ps-0">
+			<h1 class="text-start">Relationship Types</h1>
+		</div>
+		<div class="col-md-4 text-end">
+			<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/RelationshipTypes/Create"> Add a new Relationship Type </Button>
+		</div>
+	</div>
+	<div class="row">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th scope="col" class="col-8">Name</th>
+					<th scope="col" class="col-4">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach(var rt in Listing)
+			{
+				<tr>
+					<td>
+						@rt.Name<br/>
+						<span style="font-size: smaller;">@rt.ShortDescription</span>
+					</td>
+					<td class="text-end">
+						<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+						<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+					</td>
+				</tr>
+			}
+			</tbody>
+		</table>
+	</div>
+</ShowLoading>
+</div>
+
+@code
+{
+	private bool Loading = true;
+	private Exception? Error;
+
+	private List<RelationshipType> Listing = new List<RelationshipType>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				using var context = FIABContext.Create(Config);
+				// TODO - Pagination and Filtering will be needed soon.
+				Listing = await context.RelationshipTypes.ToListAsync();
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+}

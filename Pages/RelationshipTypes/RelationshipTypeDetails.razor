@@ -1,0 +1,66 @@
+@page "/RelationshipTypes/{IdString}"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+<DisplayError Error=Error />
+
+<ShowLoading Loading=Loading>
+	<div class="row">
+		<div class="col">
+			<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
+			<div>@Item?.ShortDescription</div>
+			@if(Item?.Parent != null)
+			{
+				<div>
+					Parent: <a href="/RelationshipTypes/@Item.Parent.Id">@Item.Parent.Name</a>
+					<span class="fs-6">@Item.Parent.ShortDescription</span>
+				</div>
+			}
+			<div>@Item?.Details</div>
+		</div>
+	</div>
+</ShowLoading>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private int Id;
+
+	private bool Loading = true;
+	private Exception? Error;
+	private RelationshipType? Item;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		try
+		{
+			if(firstRender)
+			{
+				Id = int.Parse(IdString);
+				var tasks = new List<Task> { SetItem() };
+				await Task.WhenAll(tasks);
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private async Task SetItem()
+	{
+		using var context = FIABContext.Create(Config);
+		Item = await context.RelationshipTypes.SingleAsync(n => n.Id == Id);
+	}
+}
