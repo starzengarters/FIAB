@@ -12,15 +12,28 @@
 	<div class="row">
 		<div class="col">
 			<h1>@(Item == null ? $"Noun {Id}" : Item.Name)</h1>
-			<div>@Item?.ShortDescription</div>
-			<div>@Item?.Details</div>
+		</div>
+		<div class="col text-end pt-2">
+			<Button Type="ButtonType.Link" To=@($"/Nouns/{Id}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
 		</div>
 	</div>
-	<div class="row mt-3">
+	<div class="row mt-2">
+		<div class="col-2 text-end"><strong>Short Description:</strong></div>
+		<div class="col">
+			@Item?.ShortDescription
+		</div>
+	</div>
+	<div class="row mt-2">
+		<div class="col-2 text-end"><strong>Details:</strong></div>
+		<div class="col">
+			<TextToHtml Value=@Item?.Details />
+		</div>
+	</div>
+	<div class="row mt-3 mb-3">
 		<div class="col">
 			<h2>Relationships (@Relationships.Count)</h2>
 		</div>
-		<div class="col">
+		<div class="col text-end">
 			<Button Color="ButtonColor.Primary" Size="Size.Large" Outline="true" Disabled=AddingRelationship @onclick=ShowAddRelationship>Add Relationship</Button>
 		</div>
 	</div>
