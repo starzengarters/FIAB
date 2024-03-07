@@ -60,7 +60,10 @@
 			{
 				using var context = FIABContext.Create(Config);
 				// TODO - Pagination and Filtering will be needed soon.
-				Listing = await context.RelationshipTypes.ToListAsync();
+				Listing = await context.RelationshipTypes
+					.OrderByDescending(rt => rt.Parent)
+					.ThenBy(rt => rt.Name)
+					.ToListAsync();
 			}
 		}
 		catch(Exception ex)
