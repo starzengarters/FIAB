@@ -1,0 +1,30 @@
+@using FIAB.Models
+
+@if(FormattedContent != null)
+{
+	@FormattedContent
+}
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public string? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<string?> ValueChanged { get; set; }
+
+	private RenderFragment? FormattedContent;
+
+	protected override void OnParametersSet()
+	{
+		FormattedContent = TextAsHtml(Value ?? string.Empty);
+	}
+	
+	private RenderFragment TextAsHtml(string input)
+	{
+		//TODO use regext to rip out any HTML tags in there to prevent injecction attacks.
+		var htmlString = input.Replace("\n", "\n<br/>\n");
+		return new RenderFragment(b => b.AddMarkupContent(0, htmlString));
+	}
+}
