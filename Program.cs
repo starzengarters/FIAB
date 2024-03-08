@@ -2,6 +2,10 @@ using FIAB.Contexts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI;
+using Microsoft.AspNetCore.Components.Authorization;
+using FIAB.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
@@ -12,6 +16,20 @@ builder.Services.AddDbContext<FIABContext>(options =>
 	var cs = FIAB.Models.Utilities.Env("ConnectionString", true, builder.Configuration);
 	FIABContext.UpdateOptions(options, cs);
 });
+
+// Setting up authentication
+builder.Services.AddDbContext<AuthDbContext>(options =>
+{
+	var cs = FIAB.Models.Utilities.Env("ConnectionString", true, builder.Configuration);
+	AuthDbContext.UpdateOptions(options, cs);
+});
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<AuthDbContext>();
+
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+
+// End of authentication.
 
 var app = builder.Build();
 
