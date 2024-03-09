@@ -63,6 +63,7 @@ try
 		context.Database.Migrate();
 		Console.Error.WriteLine($"\tMigrated database.");
 	}
+	// TODO - Migrate the AuthDbContext, too.
 }
 catch (Exception ex)
 {
