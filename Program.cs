@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Components.Authorization;
 using FIAB.Providers;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
@@ -18,15 +19,28 @@ builder.Services.AddDbContext<FIABContext>(options =>
 });
 
 // Setting up authentication
+// if credentials were supplied add an EmailSender for registration and password recovery.
+var s = FIAB.Models.Utilities.Env("SmtpServer", false, builder.Configuration, string.Empty);
+var pt = FIAB.Models.Utilities.Env("SmtpPort", true, builder.Configuration);
+var u = FIAB.Models.Utilities.Env("SmtpUser", false, builder.Configuration, string.Empty);
+var p = FIAB.Models.Utilities.Env("SmptPassword", false, builder.Configuration, string.Empty);
+if(!string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(pt) && !string.IsNullOrWhiteSpace(u) && !string.IsNullOrWhiteSpace(p))
+{
+	builder.Services.AddTransient<IEmailSender, EmailSender>();
+}
+
+// Configure injection for AuthDbContext.
 builder.Services.AddDbContext<AuthDbContext>(options =>
 {
 	var cs = FIAB.Models.Utilities.Env("ConnectionString", true, builder.Configuration);
 	AuthDbContext.UpdateOptions(options, cs);
 });
 
+// Settings for Identity/Login
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AuthDbContext>();
 
+// Inject AuthenticationStateProvider for checking authentication status.
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 
 // End of authentication.
