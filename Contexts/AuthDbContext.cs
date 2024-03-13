@@ -19,6 +19,7 @@ namespace FIAB.Contexts
 		}
 
 		// seed default roles.
+		// Thanks, Chris Sainty! https://chrissainty.com/securing-your-blazor-apps-configuring-role-based-authorization-with-client-side-blazor/
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
