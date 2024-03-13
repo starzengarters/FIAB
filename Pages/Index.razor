@@ -7,6 +7,18 @@
 
 <p>For now you can checkout our lovely collection of <a href="/Nouns">Nouns</a>.</p>
 
+<h2>Role Call:</h2>
+<p>ClaimTypes.Name: @System.Security.Claims.ClaimTypes.Name</p>
+<p>ClaimTypes.Role: @System.Security.Claims.ClaimTypes.Role</p>
+
+<AuthorizeView Roles="User">
+    <p>You can only see this if you're in the User role.</p>
+</AuthorizeView>
+
+<AuthorizeView Roles="Admin">
+    <p>You can only see this if you're in the Admin role.</p>
+</AuthorizeView>
+
 @code
 {
 
