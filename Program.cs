@@ -38,7 +38,8 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 
 // Settings for Identity/Login
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<AuthDbContext>();
+    .AddRoles<IdentityRole>()
+	.AddEntityFrameworkStores<AuthDbContext>();
 
 // Inject AuthenticationStateProvider for checking authentication status.
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
