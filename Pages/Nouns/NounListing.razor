@@ -8,41 +8,49 @@
 <div class="container">
 
 <DisplayError Error=Error />
-<ShowLoading Loading=Loading>
-	<div class="row">
-		<div class="col-8 ps-0">
-			<h1 class="text-start">Nouns</h1>
-		</div>
-		<div class="col-md-4 text-end">
-			<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
-		</div>
-	</div>
-	<div class="row">
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th scope="col" class="col-8">Name</th>
-					<th scope="col" class="col-4">Actions</th>
-				</tr>
-			</thead>
-			<tbody>
-			@foreach(var noun in Listing)
-			{
-				<tr>
-					<td>
-						@noun.Name<br/>
-						<span style="font-size: smaller;">@noun.ShortDescription</span>
-					</td>
-					<td class="text-end">
-						<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
-						<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
-					</td>
-				</tr>
-			}
-			</tbody>
-		</table>
-	</div>
-</ShowLoading>
+
+<AuthorizeView Roles=@Constants.Roles.User>
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<div class="row">
+				<div class="col-8 ps-0">
+					<h1 class="text-start">Nouns</h1>
+				</div>
+				<div class="col-md-4 text-end">
+					<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
+				</div>
+			</div>
+			<div class="row">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th scope="col" class="col-8">Name</th>
+							<th scope="col" class="col-4">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+					@foreach(var noun in Listing)
+					{
+						<tr>
+							<td>
+								@noun.Name<br/>
+								<span style="font-size: smaller;">@noun.ShortDescription</span>
+							</td>
+							<td class="text-end">
+								<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+								<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+							</td>
+						</tr>
+					}
+					</tbody>
+				</table>
+			</div>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
 </div>
 
 @code

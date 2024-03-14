@@ -20,56 +20,63 @@
 	</div>
 }
 
-<ShowLoading Loading=Loading>
-	<h1>
-		@(Editing ? $"Editing {Item.Id}" : "Create")
-	</h1>
-	
-	<EditForm EditContext="EC" OnSubmit="SubmitForm">
-		<div class="row mt-3">
-			<div class="col">
-				<label for=@GetFormId("name") class="form-label">
-					Name
-				</label>
-				<InputText @bind-Value=Item.Name id=@GetFormId("name") class="form-control" />
-				<ValidationMessage For=@(() => Item.Name) />
-			</div>
-		</div>
-		<div class="row mt-3">
-			<div class="col">
-				<label for=@GetFormId("ShortDescription") class="form-label">
-					Short Description
-				</label>
-				<InputText
-					@bind-Value=Item.ShortDescription
-					id=@GetFormId("ShortDescription")
-					class="form-control"
-					placeholder="Short description returned in search results" />
-				<ValidationMessage For=@(() => Item.ShortDescription) />
-			</div>
-		</div>
-		<div class="row mt-3">
-			<div class="col">
-				<label for=@GetFormId("Details") class="form-label">
-					Details
-				</label>
-				<InputTextArea @bind-Value=Item.Details id=@GetFormId("Details") class="form-control" rows="7" />
-				<ValidationMessage For=@(() => Item.Details) />
-			</div>
-		</div>
-		<div class="row mt-3">
-			<div class="col">
-				<DataAnnotationsValidator/>
-				<ValidationSummary/>
-			</div>
-		</div>
-		<div class="row mt-3">
-			<div class="col">
-				<button type="submit" class="btn btn-primary">Submit</button>
-			</div>
-		</div>
-	</EditForm>
-</ShowLoading>
+<AuthorizeView Roles=@Constants.Roles.User Context="auth">
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<h1>
+				@(Editing ? $"Editing {Item.Id}" : "Create")
+			</h1>
+			
+			<EditForm EditContext="EC" OnSubmit="SubmitForm">
+				<div class="row mt-3">
+					<div class="col">
+						<label for=@GetFormId("name") class="form-label">
+							Name
+						</label>
+						<InputText @bind-Value=Item.Name id=@GetFormId("name") class="form-control" />
+						<ValidationMessage For=@(() => Item.Name) />
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col">
+						<label for=@GetFormId("ShortDescription") class="form-label">
+							Short Description
+						</label>
+						<InputText
+							@bind-Value=Item.ShortDescription
+							id=@GetFormId("ShortDescription")
+							class="form-control"
+							placeholder="Short description returned in search results" />
+						<ValidationMessage For=@(() => Item.ShortDescription) />
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col">
+						<label for=@GetFormId("Details") class="form-label">
+							Details
+						</label>
+						<InputTextArea @bind-Value=Item.Details id=@GetFormId("Details") class="form-control" rows="7" />
+						<ValidationMessage For=@(() => Item.Details) />
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col">
+						<DataAnnotationsValidator/>
+						<ValidationSummary/>
+					</div>
+				</div>
+				<div class="row mt-3">
+					<div class="col">
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</div>
+			</EditForm>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
 </div>
 
 @code
