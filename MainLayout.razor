@@ -63,14 +63,14 @@
             // Determine the user's roles.
             var userClaim = AuthState!.User.Claims.SingleOrDefault(c =>
                 c.Type == System.Security.Claims.ClaimTypes.Role
-                && c.Value == "User");
+                && c.Value == Constants.Roles.User);
             
             var adminClaim = AuthState!.User.Claims.SingleOrDefault(c =>
                 c.Type == System.Security.Claims.ClaimTypes.Role
-                && c.Value == "Admin");
+                && c.Value == Constants.Roles.Admin);
             
-            // If they are a user OR admin show additional links.
-            if(userClaim != null || adminClaim != null)
+            // If they are a user show additional links.
+            if(userClaim != null)
             {
                 NavItems.Add(new NavItem { Id = "2", Href = "/Nouns", IconName = IconName.PlusSquareFill, Text = "Nouns"});
                 NavItems.Add(new NavItem { Id = "3", Href = "/RelationshipTypes", IconName = IconName.ArrowBarRight, Text = "Relationship Types"});

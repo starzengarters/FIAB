@@ -6,13 +6,13 @@
 <AuthorizeView>
     @* User is logged in. *@
     <Authorized>
-        <AuthorizeView Roles="User" Context="NestedAuthContext">
+        <AuthorizeView Roles=Constants.Roles.User Context="NestedAuthContext">
             <Authorized>
                 <p>This would be a great place to have a cached, navigable 3d graph of all the relationships, but there's a lot of work between here and there.</p>
                 <p>For now you can checkout our lovely collection of <a href="/Nouns">Nouns</a>.</p>
             </Authorized>
             <NotAuthorized>
-                <p>You do not have the <strong>User</strong> role, and will not be able to use most parts of this system.</p>
+                <p>You do not have the <strong>@Constants.Roles.User</strong> role, and will not be able to use most parts of this system.</p>
                 <p>Please contact the administrator to confirm you have the correct roles.</p>
             </NotAuthorized>
         </AuthorizeView>
