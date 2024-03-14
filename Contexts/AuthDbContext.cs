@@ -18,6 +18,20 @@ namespace FIAB.Contexts
 				.EnableDetailedErrors();
 		}
 
+		public static AuthDbContext Create(string connectionString)
+		{
+			var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
+			UpdateOptions(optionsBuilder, connectionString);
+			
+			return new AuthDbContext(optionsBuilder.Options);
+		}
+
+		public static AuthDbContext Create(IConfiguration config)
+		{
+			var connectionString = Models.Utilities.Env("ConnectionString", true, config);
+			return Create(connectionString);
+		}
+
 		// seed default roles.
 		// Thanks, Chris Sainty! https://chrissainty.com/securing-your-blazor-apps-configuring-role-based-authorization-with-client-side-blazor/
 		protected override void OnModelCreating(ModelBuilder builder)
