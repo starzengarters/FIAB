@@ -8,38 +8,45 @@
 <div class="container">
 <DisplayError Error=Error />
 
-<ShowLoading Loading=Loading>
-	<div class="row">
-		<div class="col">
-			<h1>@(Item == null ? $"RelationshipType {Id}" : Item.Name)</h1>
-		</div>
-		<div class="col text-end pt-2">
-			<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{Id}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
-		</div>
-	</div>
-	<div class="row mt-2">
-		<div class="col-2 text-end"><strong>Short Description:</strong></div>
-		<div class="col">
-			@Item?.ShortDescription
-		</div>
-	</div>
-	@if(Item?.Parent != null)
-	{
-		<div class="row mt-2">
-			<div class="col-2 text-end"><strong>Parent:</strong></div>
-			<div class="col">
-				<a href="/RelationshipTypes/@Item.Parent.Id">@Item.Parent.Name</a>
-				<span class="fs-6">@Item.Parent.ShortDescription</span>
+<AuthorizeView Roles=@Constants.Roles.User>
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<div class="row">
+				<div class="col">
+					<h1>@(Item == null ? $"RelationshipType {Id}" : Item.Name)</h1>
+				</div>
+				<div class="col text-end pt-2">
+					<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{Id}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
+				</div>
 			</div>
-		</div>
-	}
-	<div class="row mt-2">
-		<div class="col-2 text-end"><strong>Details:</strong></div>
-		<div class="col">
-			<TextToHtml Value=@Item?.Details />
-		</div>
-	</div>
-</ShowLoading>
+			<div class="row mt-2">
+				<div class="col-2 text-end"><strong>Short Description:</strong></div>
+				<div class="col">
+					@Item?.ShortDescription
+				</div>
+			</div>
+			@if(Item?.Parent != null)
+			{
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Parent:</strong></div>
+					<div class="col">
+						<a href="/RelationshipTypes/@Item.Parent.Id">@Item.Parent.Name</a>
+						<span class="fs-6">@Item.Parent.ShortDescription</span>
+					</div>
+				</div>
+			}
+			<div class="row mt-2">
+				<div class="col-2 text-end"><strong>Details:</strong></div>
+				<div class="col">
+					<TextToHtml Value=@Item?.Details />
+				</div>
+			</div>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
 </div>
 
 @code
