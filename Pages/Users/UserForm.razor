@@ -20,30 +20,37 @@
 		</div>
 	}
 
-	<ShowLoading Loading=Loading>
-		<div class="row">
-			<div class="col">
-				<h1>@(Item == null ? $"User {IdString}" : Item.UserName)</h1>
-			</div>
-		</div>
-
-		<div class="row">
-			<div class="col">
-				<h2>Roles</h2>
-				<p style="font-size: smaller;">Changes are written to the DB immediately, but user will need to logout and login to get new permissions.</p>
-			</div>
-		</div>
-
-		@foreach(var userRole in UserRoles)
-		{
-			<div class="row mt-2">
-				<div class="col-2 text-end"></div>
-				<div class="col">
-					<Switch Value="userRole.UserHasRole" ValueExpression="() => userRole.UserHasRole" Label=@userRole.Role.Name ValueChanged=userRole.Toggle />
+	<AuthorizeView Roles=@Constants.Roles.Admin>
+		<NotAuthorized>
+			<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredAdmin</Alert>
+		</NotAuthorized>
+		<Authorized>
+			<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col">
+						<h1>@(Item == null ? $"User {IdString}" : Item.UserName)</h1>
+					</div>
 				</div>
-			</div>
-		}
-	</ShowLoading>
+
+				<div class="row">
+					<div class="col">
+						<h2>Roles</h2>
+						<p style="font-size: smaller;">Changes are written to the DB immediately, but user will need to logout and login to get new permissions.</p>
+					</div>
+				</div>
+
+				@foreach(var userRole in UserRoles)
+				{
+					<div class="row mt-2">
+						<div class="col-2 text-end"></div>
+						<div class="col">
+							<Switch Value="userRole.UserHasRole" ValueExpression="() => userRole.UserHasRole" Label=@userRole.Role.Name ValueChanged=userRole.Toggle />
+						</div>
+					</div>
+				}
+			</ShowLoading>
+		</Authorized>
+	</AuthorizeView>
 </div>
 
 @code

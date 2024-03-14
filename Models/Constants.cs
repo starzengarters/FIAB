@@ -12,6 +12,7 @@ namespace FIAB.Models
 		public sealed class Messages
 		{
 			public static string RoleRequiredUser = $"You must have the {Roles.User} role to view this page.";
+			public static string RoleRequiredAdmin = $"You must have the {Roles.Admin} role to view this page.";
 		}
 	}
 
