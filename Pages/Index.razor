@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using Microsoft.EntityFrameworkCore
 @inject IConfiguration Config
 
 <h1 class="mb-4">FIAB</h1>
@@ -24,9 +25,18 @@
 </AuthorizeView>
 
 <h2>Searchable Select</h2>
-<SearchableSelect @bind-Value=thing Placeholder="Search Nouns" />
+<SearchableSelect @bind-Value=thing Search=SearchNouns Id="string-id" Placeholder="Search Nouns" />
 
 @code
 {
-    private string thing = string.Empty;
+    private Noun? thing;
+
+    private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
+    {
+        using var db = Contexts.FIABContext.Create(Config);
+        var results = await db.Nouns.Where(n => n.Name.StartsWith(searchTerm))
+        .AsNoTracking()
+        .ToListAsync();
+        return results;
+    }
 }
