@@ -1,0 +1,21 @@
+<div class="input-group mb-3">
+	<input type="text" class="form-control" placeholder="@Placeholder" aria-label="@Placeholder " aria-describedby="@($"{componentId}-btn")">
+	<Button Color="ButtonColor.Dark" id="@($"{componentId}-btn")">
+		<Icon Name=IconName.CaretDownFill />
+	</Button>
+</div>
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public string? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<string?> ValueChanged { get; set; }
+
+	[Parameter]
+	public string Placeholder { get; set; } = "Search";
+	
+	private string componentId = System.Guid.NewGuid().ToString();
+}

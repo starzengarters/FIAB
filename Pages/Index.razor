@@ -23,9 +23,10 @@
     </NotAuthorized>
 </AuthorizeView>
 
-
+<h2>Searchable Select</h2>
+<SearchableSelect @bind-Value=thing Placeholder="Search Nouns" />
 
 @code
 {
-
+    private string thing = string.Empty;
 }
