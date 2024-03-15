@@ -1,7 +1,10 @@
 @using Microsoft.AspNetCore.Components.Forms
 
 <div class="input-group mb-3">
-	<InputText @bind-Value=SearchTerm placeholder="@Placeholder" aria-label="@Placeholder" aria-describedby="@($"{Id}-btn")" class="form-control" />
+	<InputText
+		@bind-Value="SearchTerm"
+		@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
+		placeholder="@Placeholder" aria-label="@Placeholder" aria-describedby="@($"{Id}-btn")" class="form-control" />
 	<Button Color="ButtonColor.Dark" id="@($"{Id}-btn")">
 		<Icon Name=IconName.CaretDownFill />
 	</Button>
@@ -41,7 +44,7 @@
 	[Parameter]
 	public string Placeholder { get; set; } = "Search";
 
-	private string SearchTerm = string.Empty;
+	private string SearchTerm { get; set; } = string.Empty;
 	private IEnumerable<Noun> Options = new List<Noun>();
 
 	protected override async Task OnParametersSetAsync()
@@ -50,5 +53,22 @@
 			Options = await Search(SearchTerm);
 		
 		await base.OnParametersSetAsync();
+	}
+
+	private void KeyUp()
+	{
+		Console.WriteLine($"\n\tFrom KeyUp() SearchTerm: {SearchTerm}");
+	}
+
+	protected async Task DoSearch(string value)
+	{
+		if(SearchTerm != value)
+		{
+			SearchTerm = value;
+
+			Console.Write($"\n\tInvoking Search({SearchTerm})");
+			Options = await Search(SearchTerm);
+			Console.WriteLine(Options.Count());
+		}
 	}
 }

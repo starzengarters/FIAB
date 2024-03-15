@@ -34,7 +34,7 @@
     private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
     {
         using var db = Contexts.FIABContext.Create(Config);
-        var results = await db.Nouns.Where(n => n.Name.StartsWith(searchTerm))
+        var results = await db.Nouns.Where(n => n.Name.ToLower().StartsWith(searchTerm.ToLower()))
         .AsNoTracking()
         .ToListAsync();
         return results;
