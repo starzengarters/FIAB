@@ -34,6 +34,13 @@ Command breakddown
 		* `-e SmtpPort=465` - The port used for ["explicit"](https://stackoverflow.com/a/53888031) SSL requests
 		* `-e SmtpUser="youremail@yourdomain.com"`
 		* `-e SmptPassword="yourSmtpPassword"`
+	* If you want to use an SSL certificate .pfx file add these additional arguments
+		* `-v /certs/fiab:/certs/` - Maps the local folder `/certs/fiab` where your PFX file is stored to `/certs` inside the container
+ 		* `-p 8001:443` - Listen on port `8001` of localhost, and that traffic goes to port 443 inside the container
+ 		* `-e ASPNETCORE_URLS="https://+;http://+"` - Configures webserver to handle, and prefer, https requests
+		* `-e ASPNETCORE_HTTPS_PORTS=8001` - Configures webserver to work with external port `8001` in the `-p 8001:443` step
+ 		* `-e ASPNETCORE_Kestrel__Certificates__Default__Password="YourCertPassword"` - Password needed to use the PFX file
+ 		* `-e ASPNETCORE_Kestrel__Certificates__Default__Path=/certs/fiab.pfx` - The path, inside the container, to the PFX file
 * `--name fiab-demo` - Name the new container `fiab-demo`
 * `fiab:0.0.1-alpha` - the name of the image we built previously
 
