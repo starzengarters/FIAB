@@ -14,7 +14,6 @@
 			OnShowing=@((e) => _CancelableSearch.Showing = true)
 			OnHidden=@((e) => _CancelableSearch.Showing = false)
 			class="d-grid gap-2">
-			<p>Showing: @_CancelableSearch.Showing</p>
 			<DropdownToggleButton Color="ButtonColor.Secondary" @onclick=@((e) => SearchToggled()) TabIndex="1">@ButtonText</DropdownToggleButton>
 			<DropdownMenu class="p-4 container-fluid">
 			@if(_CancelableSearch.Exception != null)
@@ -38,14 +37,15 @@
 				}
 				else
 				{
-					<p>@Options.Count() Matches:</p>
-					@foreach(var option in Options.Select((value, i) => new { value, i }))
+					@* @foreach(var option in Options.Select((value, i) => new { value, i }))
 					{
 						<DropdownItem To="#" TabIndex=@(option.i+1) Type="ButtonType.Button" @onclick=@((e) => OptionClicked(option.value.Id))>
 							@option.value.Name
 							<p class="muted mt-0 pt-1">@option.value.ShortDescription</p>
 						</DropdownItem>
-					}
+					} *@
+					<DropdownItem Type="ButtonType.Link">Billly</DropdownItem>
+					<DropdownItem Type="ButtonType.Link">Mary</DropdownItem>
 				}
 			}
 			</DropdownMenu>
@@ -53,6 +53,33 @@
 	</div>
 	<div class="col">
 		<Button Type="ButtonType.Button" @onclick=SearchToggled>Toggle</Button>
+	</div>
+</div>
+
+<div class="row mt-4">
+	<div class="col">
+		<div class="dropdown">
+			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+				Dropdown button
+			</button>
+			<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+				@if(Options.Count() == 0)
+				{
+					@if(!string.IsNullOrWhiteSpace(SearchTerm))
+					{
+						<li><span class="dropdown-item-text"><em>No records starting with "@SearchTerm"</em></span>
+						</li>
+					}
+				}
+				else
+				{
+					@foreach(var option in Options)
+					{
+						<li><a class="dropdown-item" href="#">@option.Name - @option.ShortDescription</a></li>
+					}
+				}
+			</ul>
+		</div>
 	</div>
 </div>
 
