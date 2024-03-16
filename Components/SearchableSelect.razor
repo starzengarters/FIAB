@@ -23,17 +23,17 @@
 					@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
 					@onkeyup=@((e) => KeyUp(e))
 					placeholder="@Placeholder"
-					class="form-control form-control-lg py-3"
+					class="form-control"
 					data-bs-toggle="dropdown" />
 			}
 			else
 			{
-				<Alert Color="AlertColor.Secondary" class="form-control mb-0 pb-0">
+				<div class="form-control form-control-sm mb-0 pb-0">
 					<span class="align-bottom">
 					@Value?.Name
-					<p style="font-size: smaller">@Value?.ShortDescription</p>
+					<p class="m-0" style="font-size: smaller;">@Value?.ShortDescription</p>
 					</span>
-				</Alert>
+				</div>
 			}
 			<Button Type="ButtonType.Button" Color="ButtonColor.Danger" Outline=true Disabled=@(Value == null) @onclick=ClearValue>Clear</Button>
 			<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
@@ -146,10 +146,19 @@
 
 	private async Task KeyUp(KeyboardEventArgs evt)
 	{
-		if(evt.Key == "ArrowDown" && !(evt.AltKey || evt.CtrlKey || evt.ShiftKey))
+		if(!(evt.AltKey || evt.CtrlKey || evt.ShiftKey))
 		{
-			Console.WriteLine("ArrowDown pressed! TODO: Focus");
-			await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item0");
+			if(evt.Key == "ArrowDown")
+			{
+				Console.WriteLine("ArrowDown pressed! TODO: Focus");
+				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item0");
+			}
+			if(evt.Key == "ArrowUp")
+			{
+				Console.WriteLine("ArrowUp pressed! TODO: Focus");
+				var lastItem = Options.Count() - 1;
+				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item{lastItem}");
+			}
 		}
 		await Task.CompletedTask;
 	}
