@@ -22,17 +22,24 @@
 					@bind-Value="SearchTerm"
 					@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
 					@onkeyup=@((e) => KeyUp(e))
+					@onfocus=@((e) => _CancelableSearch.Showing = true)
 					placeholder="@Placeholder"
 					class="form-control"
 					data-bs-toggle="dropdown" />
 			}
 			else
 			{
-				<div class="form-control form-control-sm mb-0 pb-0">
-					<span class="align-bottom">
-					@Value?.Name
-					<p class="m-0" style="font-size: smaller;">@Value?.ShortDescription</p>
-					</span>
+				<div class="form-control form-control-sm my-0 py-0 bg-light">
+					<div class="row">
+						<div class="col-md-2">
+							@Value?.Name
+						</div>
+					</div>
+					<div class="row">
+						<div class="col small">
+							@Value?.ShortDescription
+						</div>
+					</div>
 				</div>
 			}
 			<Button Type="ButtonType.Button" Color="ButtonColor.Danger" Outline=true Disabled=@(Value == null) @onclick=ClearValue>Clear</Button>
@@ -188,7 +195,7 @@
 					}
 
 					// Request has started, show the dropdown-menu
-					_CancelableSearch!.Showing = true;
+					//_CancelableSearch!.Showing = true;
 
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
@@ -208,11 +215,11 @@
 
 							Console.WriteLine($" got {results.Count()}");
 							Options = results;
-							_CancelableSearch.Exception = null;
+							_CancelableSearch!.Exception = null;
 						}
 						catch(Exception ex)
 						{
-							_CancelableSearch.Exception = ex;
+							_CancelableSearch!.Exception = ex;
 						}
 					}
 				}, ts.Token)
