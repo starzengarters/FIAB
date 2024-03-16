@@ -11,7 +11,7 @@
 	{
 		<div class="dropdown">
 			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-				Dropdown button
+				@(Value != null ? $"{Value.Name} - {Value.ShortDescription}" : Placeholder)
 			</button>
 			<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
 				<li>
@@ -43,7 +43,7 @@
 				{
 					@foreach(var option in Options)
 					{
-						<li><a class="dropdown-item" href="#">@option.Name - @option.ShortDescription</a></li>
+						<li><a class="dropdown-item" href="#" @onclick=@(() => OptionClicked(option.Id))>@option.Name - @option.ShortDescription</a></li>
 					}
 				}
 			</ul>
@@ -211,6 +211,7 @@
 		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
 		
 		// Hide the options by emptying the list.
+		SearchTerm = string.Empty;
 		Options = new List<Noun>();
 	}
 	#endregion
