@@ -1,25 +1,43 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.EntityFrameworkCore
 @inject IConfiguration Config
+@inject IJSRuntime JS
 
 @*TODO - Set the value of this to reflect the currently selected value*@
 
 <div class="row mt-4">
 	<div class="col">
+	@if(_CancelableSearch != null)
+	{
 		<div class="dropdown">
 			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
 				Dropdown button
 			</button>
 			<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-				@if(Options.Count() == 0)
+				<li>
+					<span class="dropdown-item-text">
+						<InputText
+							@bind-Value="SearchTerm"
+							@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
+							@onkeyup=@((e) => KeyUp(e))
+							placeholder="@Placeholder" class="form-control" />
+					</span>
+				</li>
+				@if(_CancelableSearch.Exception != null)
 				{
-					@* YOU ARE HERE
-					Add a text <input> make it's @onchange call DoSearch() *@
-					@* @if(!string.IsNullOrWhiteSpace(SearchTerm))
-					{ *@
-						<li><span class="dropdown-item-text"><em>No records starting with "@SearchTerm"</em></span
-						</li>
-					@* } *@
+					<li>
+						<span class="dropdown-item-text">
+							<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
+						</span>
+					</li>
+				}
+				@if(_CancelableSearch.Searching)
+				{
+					<li>
+						<span class="dropdown-item-text">
+							<Spinner Type="SpinnerType.Dots" />
+						</span>
+					</li>
 				}
 				else
 				{
@@ -30,6 +48,10 @@
 				}
 			</ul>
 		</div>
+	}
+	</div>
+	<div class="col">
+		<Button Type="ButtonType.Button" @onclick=@((e) => Populate())>Populate</Button>
 	</div>
 </div>
 
@@ -52,7 +74,7 @@
 	public Func<string, Task<IEnumerable<Noun>>> Search { get; set; } = default!;
 
 	[Parameter]
-	public string? Placeholder { get; set; }
+	public string? Placeholder { get; set; } = "Nouns starting with...";
 
 	private string ButtonText =>
 		Value != null
@@ -62,22 +84,29 @@
 				: Placeholder;
 
 	private string SearchTerm { get; set; } = string.Empty;
-	private CancelableSearch _CancelableSearch = new CancelableSearch();
+	private CancelableSearch? _CancelableSearch = default!;
 
 	private IEnumerable<Noun> Options = new List<Noun>();
-	private Dropdown SearchDropdown = default!;
-
-	private void KeyUp()
+	
+	protected override async Task OnInitializedAsync()
 	{
-		Console.WriteLine($"\n\tFrom KeyUp() SearchTerm: {SearchTerm}");
+		_CancelableSearch = new CancelableSearch(JS);
+		await Task.CompletedTask;
 	}
 
 	#region Search
 	private class CancelableSearch
 	{
+		public CancelableSearch(IJSRuntime js)
+		{
+			JS = js;
+		}
+		private IJSRuntime JS;
 		public Task? Task { get; set; }
 		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
-		public bool Showing = false;
+		public bool Showing { get; set; } = false;
+		public string MenuShownClass => Showing ? "show is-active" : "";
+		
 		public CancellationTokenSource? TokenSource { get; set; }
 		public Exception? Exception;
 
@@ -96,29 +125,42 @@
 		}
 	}
 
+	private async Task KeyUp(KeyboardEventArgs evt)
+	{
+		if(evt.Key == "ArrowDown" && !(evt.AltKey || evt.CtrlKey || evt.ShiftKey))
+		{
+			Console.WriteLine("ArrowDown pressed! TODO: Focus");
+		}
+		await Task.CompletedTask;
+	}
+
 	protected async Task DoSearch(string value)
 	{
 		Console.WriteLine($"\"{value}\"");
 		if(SearchTerm != value)
 		{
 			// Cancel any other running search
-			_CancelableSearch.CancelSearch();
+			if(_CancelableSearch != null)
+				_CancelableSearch.CancelSearch();
 			// Update the value bound to the search input.
 			SearchTerm = value;
 
 			// Make a cancelable request to the API and process the response.
 			var ts = new CancellationTokenSource();
-			_CancelableSearch = new CancelableSearch
+			_CancelableSearch = new CancelableSearch(JS)
 			{
 				TokenSource = ts,
 				Task = Task.Run(async () =>
 				{
-
 					if(string.IsNullOrWhiteSpace(SearchTerm))
 					{
 						Options = new List<Noun>();
 						return;
 					}
+
+					// Request has started, show the dropdown-menu
+					_CancelableSearch!.Showing = true;
+
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
 
@@ -137,6 +179,7 @@
 
 							Console.WriteLine($" got {results.Count()}");
 							Options = results;
+							_CancelableSearch.Exception = null;
 						}
 						catch(Exception ex)
 						{
@@ -150,21 +193,12 @@
 		}
 	}
 	
-	private async Task SearchToggled()
+	
+
+	private async Task Populate()
 	{
-		Console.Write($"\nSearchToggled()... ");
-		if(_CancelableSearch.Showing)
-		{
-			Console.WriteLine("Hiding.");
-			await SearchDropdown.HideAsync();
-		}
-		else
-		{
-			Console.WriteLine("Showing.");
-			using var db = Contexts.FIABContext.Create(Config);
-			Options = await db.Nouns.AsNoTracking().ToListAsync();
-			await SearchDropdown.ShowAsync();
-		}
+		using var db = Contexts.FIABContext.Create(Config);
+		Options = await db.Nouns.AsNoTracking().ToListAsync();
 	}
 
 	private async Task OptionClicked(int id)
@@ -175,7 +209,9 @@
 		await ValueChanged.InvokeAsync(x);
 		Console.WriteLine($"x: ({x?.Id}) {x?.Name} {x?.ShortDescription}");
 		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
-		await SearchDropdown.HideAsync();
+		
+		// Hide the options by emptying the list.
+		Options = new List<Noun>();
 	}
 	#endregion
 }
