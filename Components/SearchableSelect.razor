@@ -1,59 +1,49 @@
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@inject IConfiguration Config
 
-<div class="input-group mb-3">
-	@*TODO - Set the value of this to reflect the currently selected value*@
-	<InputText
-		@bind-Value="SearchTerm"
-		@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
-		placeholder="@Placeholder" aria-label="@Placeholder" aria-describedby="@($"{Id}-btn")" class="form-control" />
-	<Button Color="ButtonColor.Dark" id="@($"{Id}-btn")">
-		<Icon Name=IconName.CaretDownFill />
-	</Button>
-</div>
-
-@*TODO - Make this the options you can arrow through or click to pick a suggestion.*@
+@*TODO - Set the value of this to reflect the currently selected value*@
 <div class="row">
-	@if(_CancelableSearch.Exception != null)
-	{
-		<div class="col">
-			<Alert>@_CancelableSearch.Exception.Message</Alert>
-		</div>
-	}
-	else if(_CancelableSearch.Searching)
-	{
-		<!--- draw a spinner--->
-		<div class="col">
-			<Spinner Type=SpinnerType.Dots Color=SpinnerColor.Secondary />
-		</div>
-	}
-	else
-	{
-		@if(Options.Count() > 0)
-		{
-			<div class="col">
-				@Options.Count() Matches:
-				<ul>
-				@foreach(var option in Options)
-				{
-					<li>
-						@option.Name<br/>
-						<span style="font-size: smaller;">@option.ShortDescription</span>
-					</li>
-				}
-				</ul>
-			</div>
-		}
-		else
-		{
-			@if(!string.IsNullOrWhiteSpace(SearchTerm))
+	<div class="col">
+		<Dropdown @ref=SearchDropdown class="d-grid gap-2">
+			<DropdownToggleButton Color="ButtonColor.Secondary" @onclick=@((e) => DoSearch("Jo"))>@ButtonText</DropdownToggleButton>
+			<DropdownMenu class="p-4 container-fluid">
+			@if(_CancelableSearch.Exception != null)
 			{
-				<div class="col">
-					<em>No records starting with "@SearchTerm"</em>
-				</div>
+				<Alert>@_CancelableSearch.Exception.Message</Alert>
 			}
-		}
-	}
+			else if(_CancelableSearch.Searching)
+			{
+				<Spinner Type=SpinnerType.Dots Color=SpinnerColor.Secondary />
+			}
+			else
+			{
+				@if(Options.Count() == 0)
+				{
+					@if(!string.IsNullOrWhiteSpace(SearchTerm))
+					{
+						<div class="col">
+							<em>No records starting with "@SearchTerm"</em>
+						</div>
+					}
+				}
+				else
+				{
+					<p>@Options.Count() Matches:</p>
+					@foreach(var option in Options)
+					{
+						<DropdownItem To="=" Type="ButtonType.Button" @onclick=@((e) => OptionClicked(option.Id))>
+							@option.Name
+							<p class="muted mt-0 pt-1">@option.ShortDescription</p>
+						</DropdownItem>
+					}
+				}
+			}
+			</DropdownMenu>
+		</Dropdown>
+	</div>
 </div>
+
 
 @code
 {
@@ -63,7 +53,7 @@
 
 	[Parameter]
 	public EventCallback<Noun?> ValueChanged { get; set; }
-	
+
 	[Parameter]
 	[EditorRequired]
 	public string? Id { get; set; }
@@ -73,12 +63,20 @@
 	public Func<string, Task<IEnumerable<Noun>>> Search { get; set; } = default!;
 
 	[Parameter]
-	public string Placeholder { get; set; } = "Search";
+	public string? Placeholder { get; set; }
+
+	private string ButtonText =>
+		Value != null
+			? $"{Value.Name} {Value.ShortDescription}" 
+			: string.IsNullOrWhiteSpace(Placeholder)
+				? "Nouns that start with..."
+				: Placeholder;
 
 	private string SearchTerm { get; set; } = string.Empty;
 	private CancelableSearch _CancelableSearch = new CancelableSearch();
 
 	private IEnumerable<Noun> Options = new List<Noun>();
+	private Dropdown SearchDropdown = default!;
 
 	private void KeyUp()
 	{
@@ -106,8 +104,6 @@
 				}
 			}
 		}
-
-
 	}
 
 	protected async Task DoSearch(string value)
@@ -127,7 +123,7 @@
 				TokenSource = ts,
 				Task = Task.Run(async () =>
 				{
-					
+
 					if(string.IsNullOrWhiteSpace(SearchTerm))
 					{
 						Options = new List<Noun>();
@@ -135,7 +131,7 @@
 					}
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
-					
+
 					Console.Write($"\n\tInvoking Search({SearchTerm})... ");
 					var results = await Search(SearchTerm);
 
@@ -164,6 +160,15 @@
 		}
 	}
 
-	
+	private async Task OptionClicked(int id)
+	{
+		Console.WriteLine($"OptionClicked({id})");
+		using var db = Contexts.FIABContext.Create(Config);
+		var x = await db.Nouns.SingleOrDefaultAsync(n => n.Id == id);
+		await ValueChanged.InvokeAsync(x);
+		Console.WriteLine($"x: ({x?.Id}) {x?.Name} {x?.ShortDescription}");
+		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
+		await SearchDropdown.HideAsync();
+	}
 	#endregion
 }
