@@ -5,8 +5,17 @@
 @*TODO - Set the value of this to reflect the currently selected value*@
 <div class="row">
 	<div class="col">
-		<Dropdown @ref=SearchDropdown class="d-grid gap-2">
-			<DropdownToggleButton Color="ButtonColor.Secondary" @onclick=@((e) => DoSearch("Jo"))>@ButtonText</DropdownToggleButton>
+		@* 
+		YOU ARE HERE
+		This looks great, but arrow keys aren't working
+		And I haven't got a search box plumbed-in *@
+		<Dropdown
+			@ref=SearchDropdown
+			OnShowing=@((e) => _CancelableSearch.Showing = true)
+			OnHidden=@((e) => _CancelableSearch.Showing = false)
+			class="d-grid gap-2">
+			<p>Showing: @_CancelableSearch.Showing</p>
+			<DropdownToggleButton Color="ButtonColor.Secondary" @onclick=@((e) => SearchToggled()) TabIndex="1">@ButtonText</DropdownToggleButton>
 			<DropdownMenu class="p-4 container-fluid">
 			@if(_CancelableSearch.Exception != null)
 			{
@@ -30,17 +39,20 @@
 				else
 				{
 					<p>@Options.Count() Matches:</p>
-					@foreach(var option in Options)
+					@foreach(var option in Options.Select((value, i) => new { value, i }))
 					{
-						<DropdownItem To="=" Type="ButtonType.Button" @onclick=@((e) => OptionClicked(option.Id))>
-							@option.Name
-							<p class="muted mt-0 pt-1">@option.ShortDescription</p>
+						<DropdownItem To="#" TabIndex=@(option.i+1) Type="ButtonType.Button" @onclick=@((e) => OptionClicked(option.value.Id))>
+							@option.value.Name
+							<p class="muted mt-0 pt-1">@option.value.ShortDescription</p>
 						</DropdownItem>
 					}
 				}
 			}
 			</DropdownMenu>
 		</Dropdown>
+	</div>
+	<div class="col">
+		<Button Type="ButtonType.Button" @onclick=SearchToggled>Toggle</Button>
 	</div>
 </div>
 
@@ -88,6 +100,7 @@
 	{
 		public Task? Task { get; set; }
 		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
+		public bool Showing = false;
 		public CancellationTokenSource? TokenSource { get; set; }
 		public Exception? Exception;
 
@@ -157,6 +170,23 @@
 			};
 
 			await _CancelableSearch.Task;
+		}
+	}
+	
+	private async Task SearchToggled()
+	{
+		Console.Write($"\nSearchToggled()... ");
+		if(_CancelableSearch.Showing)
+		{
+			Console.WriteLine("Hiding.");
+			await SearchDropdown.HideAsync();
+		}
+		else
+		{
+			Console.WriteLine("Showing.");
+			using var db = Contexts.FIABContext.Create(Config);
+			Options = await db.Nouns.AsNoTracking().ToListAsync();
+			await SearchDropdown.ShowAsync();
 		}
 	}
 
