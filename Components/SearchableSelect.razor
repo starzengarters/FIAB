@@ -23,7 +23,7 @@
 					@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
 					@onkeyup=@((e) => KeyUp(e))
 					placeholder="@Placeholder"
-					class="form-control"
+					class="form-control form-control-lg py-3"
 					data-bs-toggle="dropdown" />
 			}
 			else
@@ -259,13 +259,17 @@
 		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
 		
 		// Hide the options by emptying the list.
-		SearchTerm = Value?.Name + (string.IsNullOrWhiteSpace(Value?.ShortDescription) ? string.Empty : $" [{Value.ShortDescription}]");
-		Options = new List<Noun>();
 		_CancelableSearch!.Showing = false;
+		//SearchTerm = Value?.Name + (string.IsNullOrWhiteSpace(Value?.ShortDescription) ? string.Empty : $" [{Value.ShortDescription}]");
+		Options = new List<Noun>();
 	}
 
 	private async Task ClearValue()
 	{
+		if(_CancelableSearch != null)
+		{
+			_CancelableSearch.Showing = false;
+		}
 		await ValueChanged.InvokeAsync(null);
 		SearchTerm = string.Empty;
 	}
