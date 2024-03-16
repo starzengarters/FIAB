@@ -106,7 +106,6 @@
 		public Task? Task { get; set; }
 		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
 		public bool Showing { get; set; } = false;
-		public string MenuShownClass => Showing ? "show" : "";
 		
 		public CancellationTokenSource? TokenSource { get; set; }
 		public Exception? Exception;
@@ -132,12 +131,10 @@
 		{
 			if(evt.Key == "ArrowDown")
 			{
-				Console.WriteLine("ArrowDown pressed! TODO: Focus");
 				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item0");
 			}
 			if(evt.Key == "ArrowUp")
 			{
-				Console.WriteLine("ArrowUp pressed! TODO: Focus");
 				var lastItem = Options.Count() - 1;
 				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item{lastItem}");
 			}
@@ -147,12 +144,10 @@
 
 	protected async Task DoSearch(string value)
 	{
-		Console.WriteLine($"\"{value}\"");
 		if(SearchTerm != value)
 		{
 			// Cancel any other running search
-			if(_CancelableSearch != null)
-				_CancelableSearch.CancelSearch();
+			_CancelableSearch.CancelSearch();
 			// Update the value bound to the search input.
 			SearchTerm = value;
 
@@ -169,13 +164,8 @@
 						return;
 					}
 
-					// Request has started, show the dropdown-menu
-					//_CancelableSearch.Showing = true;
-
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
-
-					Console.Write($"\n\tInvoking Search({SearchTerm})... ");
 					var results = await Search(SearchTerm);
 
 					// If our Token didn't get canceled query the DB.
@@ -188,13 +178,12 @@
 								throw new Exception($"No Results for term \"{SearchTerm}\"");
 							}
 
-							Console.WriteLine($" got {results.Count()}");
 							Options = results;
-							_CancelableSearch!.Exception = null;
+							_CancelableSearch.Exception = null;
 						}
 						catch(Exception ex)
 						{
-							_CancelableSearch!.Exception = ex;
+							_CancelableSearch.Exception = ex;
 						}
 					}
 				}, ts.Token)
@@ -206,25 +195,18 @@
 
 	private async Task OptionClicked(int id)
 	{
-		Console.WriteLine($"OptionClicked({id})");
 		using var db = Contexts.FIABContext.Create(Config);
 		var x = await db.Nouns.SingleOrDefaultAsync(n => n.Id == id);
 		await ValueChanged.InvokeAsync(x);
-		Console.WriteLine($"x: ({x?.Id}) {x?.Name} {x?.ShortDescription}");
-		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
 		
-		// Hide the options by emptying the list.
+		// Hide the Options, and discard the Options.
 		_CancelableSearch.Showing = false;
-		//SearchTerm = Value?.Name + (string.IsNullOrWhiteSpace(Value?.ShortDescription) ? string.Empty : $" [{Value.ShortDescription}]");
 		Options = new List<Noun>();
 	}
 
 	private async Task ClearValue()
 	{
-		if(_CancelableSearch != null)
-		{
-			_CancelableSearch.Showing = false;
-		}
+		_CancelableSearch.Showing = false;
 		await ValueChanged.InvokeAsync(null);
 		SearchTerm = string.Empty;
 	}
