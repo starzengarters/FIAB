@@ -13,18 +13,43 @@
 
 @*TODO - Make this the options you can arrow through or click to pick a suggestion.*@
 <div class="row">
-	<div class="col">
-		Matches:
-		<ul>
-		@foreach(var option in Options)
+	@if(_CancelableSearch.Exception != null)
+	{
+		<div class="col">
+			<Alert>@_CancelableSearch.Exception.Message</Alert>
+		</div>
+	}
+	else if(_CancelableSearch.Searching)
+	{
+		<!--- draw a spinner--->
+		<div class="col">
+			Spinner Goes Here
+		</div>
+	}
+	else
+	{
+		@if(Options.Count() > 0)
 		{
-			<li>
-				@option.Name<br/>
-				<span style="font-size: smaller;">@option.ShortDescription</span>
-			</li>
+			<div class="col">
+				Matches:
+				<ul>
+				@foreach(var option in Options)
+				{
+					<li>
+						@option.Name<br/>
+						<span style="font-size: smaller;">@option.ShortDescription</span>
+					</li>
+				}
+				</ul>
+			</div>
 		}
-		</ul>
-	</div>
+		else
+		{
+			<div class="col">
+				<em>No Results.</em>
+			</div>
+		}
+	}
 </div>
 
 @code
@@ -48,14 +73,15 @@
 	public string Placeholder { get; set; } = "Search";
 
 	private string SearchTerm { get; set; } = string.Empty;
+	private CancelableSearch _CancelableSearch = new CancelableSearch();
+
 	private IEnumerable<Noun> Options = new List<Noun>();
 
+	
 	protected override async Task OnParametersSetAsync()
 	{
 		if(Search != null)
-			// YOU ARE HERE
-			// TODO: Use a cancellation token to wait for user to finish typting before querying the DB.
-			Options = await Search(SearchTerm);
+			await DoSearch(SearchTerm);
 		
 		await base.OnParametersSetAsync();
 	}
@@ -65,15 +91,81 @@
 		Console.WriteLine($"\n\tFrom KeyUp() SearchTerm: {SearchTerm}");
 	}
 
+	#region Search
+	private class CancelableSearch
+	{
+		public Task? Task { get; set; }
+		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
+		public CancellationTokenSource? TokenSource { get; set; }
+		public Exception? Exception;
+
+		public static List<TaskStatus> EolStatuses = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+
+		public void CancelSearch()
+		{
+			if(TokenSource != null)
+			{
+				var problem = EolStatuses.Any(st => st == Task?.Status);
+				if (!problem)
+				{
+					TokenSource.Cancel();
+				}
+			}
+		}
+
+
+	}
+
 	protected async Task DoSearch(string value)
 	{
+		Console.WriteLine(value);
 		if(SearchTerm != value)
 		{
-			SearchTerm = value;
+			// YOU ARE HERE
+			// TODO: Use a cancellation token to wait for user to finish typting before querying the DB.
+			
+			// Cancel any other running search
+			_CancelableSearch.CancelSearch();
 
-			Console.Write($"\n\tInvoking Search({SearchTerm})");
-			Options = await Search(SearchTerm);
-			Console.WriteLine(Options.Count());
+			// Make a cancelable request to the API and process the response.
+			var ts = new CancellationTokenSource();
+			_CancelableSearch = new CancelableSearch
+			{
+				TokenSource = ts,
+				Task = Task.Run(async () =>
+				{
+					// Wait for the user to stop typing before querying DB.
+					await Task.Delay(500);
+					
+					Console.Write($"\n\tInvoking Search({value})... ");
+					var results = await Search(value);
+
+					// If our Token didn't get canceled query the DB.
+					if (ts.Token.IsCancellationRequested == false)
+					{
+						try
+						{
+							if(results == null)
+							{
+								throw new Exception($"No Results for term \"{value}\"");
+							}
+
+							Console.WriteLine($" got {results.Count()}");
+							Options = results;
+							SearchTerm = value;//Update the value bound to the search input.
+						}
+						catch(Exception ex)
+						{
+							_CancelableSearch.Exception = ex;
+						}
+					}
+				}, ts.Token)
+			};
+
+			await _CancelableSearch.Task;
 		}
 	}
+
+	
+	#endregion
 }
