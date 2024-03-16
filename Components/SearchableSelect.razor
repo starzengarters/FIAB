@@ -65,11 +65,11 @@
 			<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
 				@if(Options.Count() == 0)
 				{
-					@if(!string.IsNullOrWhiteSpace(SearchTerm))
-					{
-						<li><span class="dropdown-item-text"><em>No records starting with "@SearchTerm"</em></span>
+					@* @if(!string.IsNullOrWhiteSpace(SearchTerm))
+					{ *@
+						<li><span class="dropdown-item-text"><em>No records starting with "@SearchTerm"</em></span
 						</li>
-					}
+					@* } *@
 				}
 				else
 				{
