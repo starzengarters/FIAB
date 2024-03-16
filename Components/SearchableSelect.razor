@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 
 <div class="input-group mb-3">
+	@*TODO - Set the value of this to reflect the currently selected value*@
 	<InputText
 		@bind-Value="SearchTerm"
 		@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
@@ -9,6 +10,8 @@
 		<Icon Name=IconName.CaretDownFill />
 	</Button>
 </div>
+
+@*TODO - Make this the options you can arrow through or click to pick a suggestion.*@
 <div class="row">
 	<div class="col">
 		Matches:
@@ -50,6 +53,8 @@
 	protected override async Task OnParametersSetAsync()
 	{
 		if(Search != null)
+			// YOU ARE HERE
+			// TODO: Use a cancellation token to wait for user to finish typting before querying the DB.
 			Options = await Search(SearchTerm);
 		
 		await base.OnParametersSetAsync();
