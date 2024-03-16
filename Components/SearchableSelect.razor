@@ -15,15 +15,27 @@
 	<div class="col">
 	@if(_CancelableSearch != null)
 	{
-		<div class="input-group mb-3">
-			<InputText
-				@bind-Value="SearchTerm"
-				@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
-				@onkeyup=@((e) => KeyUp(e))
-				placeholder="@Placeholder"
-				class="form-control"
-				data-bs-toggle="dropdown" />
-			<button class="btn btn-outline-secondary" type="button" aria-expanded="false">Dropdown</button>
+		<div class="input-group">
+			@if(Value == null)
+			{
+				<InputText
+					@bind-Value="SearchTerm"
+					@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
+					@onkeyup=@((e) => KeyUp(e))
+					placeholder="@Placeholder"
+					class="form-control"
+					data-bs-toggle="dropdown" />
+			}
+			else
+			{
+				<Alert Color="AlertColor.Secondary" class="form-control mb-0 pb-0">
+					<span class="align-bottom">
+					@Value?.Name
+					<p style="font-size: smaller">@Value?.ShortDescription</p>
+					</span>
+				</Alert>
+			}
+			<Button Type="ButtonType.Button" Color="ButtonColor.Danger" Outline=true Disabled=@(Value == null) @onclick=ClearValue>Clear</Button>
 			<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
 				@if(_CancelableSearch.Exception != null)
 				{
@@ -95,9 +107,6 @@
 			</div>
 		</div> *@
 	}
-	</div>
-	<div class="col">
-		<Button Type="ButtonType.Button" @onclick=@((e) => Populate())>Populate</Button>
 	</div>
 </div>
 
@@ -239,14 +248,6 @@
 			await _CancelableSearch.Task;
 		}
 	}
-	
-	
-
-	private async Task Populate()
-	{
-		using var db = Contexts.FIABContext.Create(Config);
-		Options = await db.Nouns.AsNoTracking().ToListAsync();
-	}
 
 	private async Task OptionClicked(int id)
 	{
@@ -258,9 +259,15 @@
 		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
 		
 		// Hide the options by emptying the list.
-		SearchTerm = string.Empty;
+		SearchTerm = Value?.Name + (string.IsNullOrWhiteSpace(Value?.ShortDescription) ? string.Empty : $" [{Value.ShortDescription}]");
 		Options = new List<Noun>();
 		_CancelableSearch!.Showing = false;
+	}
+
+	private async Task ClearValue()
+	{
+		await ValueChanged.InvokeAsync(null);
+		SearchTerm = string.Empty;
 	}
 	#endregion
 }
