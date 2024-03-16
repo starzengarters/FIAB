@@ -70,42 +70,6 @@
 				}
 			</ul>
 		</div>
-
-
-		@* <div class="input-group">
-			
-		
-			<div class="dropdown">
-				<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-					@(Value != null ? $"{Value.Name} - {Value.ShortDescription}" : Placeholder)
-				</button>
-				<ul class="dropdown-menu @_CancelableSearch.MenuShownClass" aria-labelledby="dropdownMenuButton1">
-					@if(_CancelableSearch.Exception != null)
-					{
-						<li>
-							<span class="dropdown-item-text">
-								<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
-							</span>
-						</li>
-					}
-					@if(_CancelableSearch.Searching)
-					{
-						<li>
-							<span class="dropdown-item-text">
-								<Spinner Type="SpinnerType.Dots" />
-							</span>
-						</li>
-					}
-					else
-					{
-						@foreach(var option in Options.Select((value, i) => new {i, value}))
-						{
-							<li><a class="dropdown-item" href="#" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
-						}
-					}
-				</ul>
-			</div>
-		</div> *@
 	}
 	</div>
 </div>
