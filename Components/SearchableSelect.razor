@@ -3,14 +3,6 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-@*TODO - Set the value of this to reflect the currently selected value*@
-
-<div class="row">
-	<div class="col">
-		Searching: @_CancelableSearch?.Searching ShowClass: @_CancelableSearch?.MenuShownClass Options: @Options.Count()
-		Value: @Value?.Name [@Value?.ShortDescription]
-	</div>
-</div>
 <div class="row mt-4">
 	<div class="col">
 	@if(_CancelableSearch != null)
@@ -20,7 +12,7 @@
 			{
 				<InputText
 					@bind-Value="SearchTerm"
-					@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
+					@oninput=@((e) => DoSearch(e.Value?.ToString() ?? string.Empty))
 					@onkeyup=@((e) => KeyUp(e))
 					@onfocus=@((e) => _CancelableSearch.Showing = true)
 					placeholder="@Placeholder"
@@ -102,32 +94,15 @@
 	[Parameter]
 	public string? Placeholder { get; set; } = "Nouns starting with...";
 
-	private string ButtonText =>
-		Value != null
-			? $"{Value.Name} {Value.ShortDescription}" 
-			: string.IsNullOrWhiteSpace(Placeholder)
-				? "Nouns that start with..."
-				: Placeholder;
-
 	private string SearchTerm { get; set; } = string.Empty;
-	private CancelableSearch? _CancelableSearch = default!;
+	private CancelableSearch _CancelableSearch = new CancelableSearch();
 
 	private IEnumerable<Noun> Options = new List<Noun>();
 	
-	protected override async Task OnInitializedAsync()
-	{
-		_CancelableSearch = new CancelableSearch(JS);
-		await Task.CompletedTask;
-	}
 
 	#region Search
 	private class CancelableSearch
 	{
-		public CancelableSearch(IJSRuntime js)
-		{
-			JS = js;
-		}
-		private IJSRuntime JS;
 		public Task? Task { get; set; }
 		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
 		public bool Showing { get; set; } = false;
@@ -183,7 +158,7 @@
 
 			// Make a cancelable request to the API and process the response.
 			var ts = new CancellationTokenSource();
-			_CancelableSearch = new CancelableSearch(JS)
+			_CancelableSearch = new CancelableSearch
 			{
 				TokenSource = ts,
 				Task = Task.Run(async () =>
@@ -195,7 +170,7 @@
 					}
 
 					// Request has started, show the dropdown-menu
-					//_CancelableSearch!.Showing = true;
+					//_CancelableSearch.Showing = true;
 
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
@@ -239,7 +214,7 @@
 		Console.WriteLine($"Value: ({Value?.Id}) {Value?.Name} {Value?.ShortDescription}");
 		
 		// Hide the options by emptying the list.
-		_CancelableSearch!.Showing = false;
+		_CancelableSearch.Showing = false;
 		//SearchTerm = Value?.Name + (string.IsNullOrWhiteSpace(Value?.ShortDescription) ? string.Empty : $" [{Value.ShortDescription}]");
 		Options = new List<Noun>();
 	}
