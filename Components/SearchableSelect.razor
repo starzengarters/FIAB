@@ -11,7 +11,7 @@
 			@if(Value == null)
 			{
 				<InputText
-					@bind-Value="SearchTerm"
+					@bind-Value=SearchTerm
 					@oninput=@((e) => DoSearch(e.Value?.ToString() ?? string.Empty))
 					@onkeyup=@((e) => KeyUp(e))
 					@onfocus=@((e) => _CancelableSearch.Showing = true)
@@ -57,9 +57,18 @@
 					@if(Options.Count() == 0)
 					{
 						<li>
-						<span class="dropdown-item-text">
-							Enter a search term.
-						</span>
+							@if(string.IsNullOrWhiteSpace(SearchTerm))
+							{
+								<span class="dropdown-item-text">
+									<Icon Name="IconName.Search" class="me-2" />Enter a search term.
+								</span>
+							}
+							else
+							{
+								<span class="dropdown-item-text">
+									<Icon Name="IconName.ExclamationCircle" class="me-2" /> No results start with "@SearchTerm"
+								</span>
+							}
 					</li>
 					}
 					@foreach(var option in Options.Select((value, i) => new {i, value}))
