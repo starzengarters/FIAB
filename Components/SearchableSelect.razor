@@ -14,12 +14,25 @@
 	<div class="col">
 	@if(_CancelableSearch != null)
 	{
-		<div class="input-group">
+		<div class="input-group mb-3">
 			<InputText
 				@bind-Value="SearchTerm"
 				@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
 				@onkeyup=@((e) => KeyUp(e))
 				placeholder="@Placeholder" class="form-control" />
+				<button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</button>
+				<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
+					<li><a class="dropdown-item" href="#">Action</a></li>
+					<li><a class="dropdown-item" href="#">Another action</a></li>
+					<li><a class="dropdown-item" href="#">Something else here</a></li>
+					<li><hr class="dropdown-divider"></li>
+					<li><a class="dropdown-item" href="#">Separated link</a></li>
+				</ul>
+		</div>
+
+
+		<div class="input-group">
+			
 		
 			<div class="dropdown">
 				<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
