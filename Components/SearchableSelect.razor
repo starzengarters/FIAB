@@ -23,7 +23,7 @@
 	{
 		<!--- draw a spinner--->
 		<div class="col">
-			Spinner Goes Here
+			<Spinner Type=SpinnerType.Dots Color=SpinnerColor.Secondary />
 		</div>
 	}
 	else
@@ -31,7 +31,7 @@
 		@if(Options.Count() > 0)
 		{
 			<div class="col">
-				Matches:
+				@Options.Count() Matches:
 				<ul>
 				@foreach(var option in Options)
 				{
@@ -45,9 +45,12 @@
 		}
 		else
 		{
-			<div class="col">
-				<em>No Results.</em>
-			</div>
+			@if(!string.IsNullOrWhiteSpace(SearchTerm))
+			{
+				<div class="col">
+					<em>No records starting with "@SearchTerm"</em>
+				</div>
+			}
 		}
 	}
 </div>
@@ -76,15 +79,6 @@
 	private CancelableSearch _CancelableSearch = new CancelableSearch();
 
 	private IEnumerable<Noun> Options = new List<Noun>();
-
-	
-	protected override async Task OnParametersSetAsync()
-	{
-		if(Search != null)
-			await DoSearch(SearchTerm);
-		
-		await base.OnParametersSetAsync();
-	}
 
 	private void KeyUp()
 	{
@@ -118,14 +112,13 @@
 
 	protected async Task DoSearch(string value)
 	{
-		Console.WriteLine(value);
+		Console.WriteLine($"\"{value}\"");
 		if(SearchTerm != value)
 		{
-			// YOU ARE HERE
-			// TODO: Use a cancellation token to wait for user to finish typting before querying the DB.
-			
 			// Cancel any other running search
 			_CancelableSearch.CancelSearch();
+			// Update the value bound to the search input.
+			SearchTerm = value;
 
 			// Make a cancelable request to the API and process the response.
 			var ts = new CancellationTokenSource();
@@ -134,11 +127,17 @@
 				TokenSource = ts,
 				Task = Task.Run(async () =>
 				{
+					
+					if(string.IsNullOrWhiteSpace(SearchTerm))
+					{
+						Options = new List<Noun>();
+						return;
+					}
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
 					
-					Console.Write($"\n\tInvoking Search({value})... ");
-					var results = await Search(value);
+					Console.Write($"\n\tInvoking Search({SearchTerm})... ");
+					var results = await Search(SearchTerm);
 
 					// If our Token didn't get canceled query the DB.
 					if (ts.Token.IsCancellationRequested == false)
@@ -147,12 +146,11 @@
 						{
 							if(results == null)
 							{
-								throw new Exception($"No Results for term \"{value}\"");
+								throw new Exception($"No Results for term \"{SearchTerm}\"");
 							}
 
 							Console.WriteLine($" got {results.Count()}");
 							Options = results;
-							SearchTerm = value;//Update the value bound to the search input.
 						}
 						catch(Exception ex)
 						{
