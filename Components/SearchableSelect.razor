@@ -8,6 +8,7 @@
 <div class="row">
 	<div class="col">
 		Searching: @_CancelableSearch?.Searching ShowClass: @_CancelableSearch?.MenuShownClass Options: @Options.Count()
+		Value: @Value?.Name [@Value?.ShortDescription]
 	</div>
 </div>
 <div class="row mt-4">
@@ -19,19 +20,47 @@
 				@bind-Value="SearchTerm"
 				@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
 				@onkeyup=@((e) => KeyUp(e))
-				placeholder="@Placeholder" class="form-control" />
-				<button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</button>
-				<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
-					<li><a class="dropdown-item" href="#">Action</a></li>
-					<li><a class="dropdown-item" href="#">Another action</a></li>
-					<li><a class="dropdown-item" href="#">Something else here</a></li>
-					<li><hr class="dropdown-divider"></li>
-					<li><a class="dropdown-item" href="#">Separated link</a></li>
-				</ul>
+				placeholder="@Placeholder"
+				class="form-control"
+				data-bs-toggle="dropdown" />
+			<button class="btn btn-outline-secondary" type="button" aria-expanded="false">Dropdown</button>
+			<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
+				@if(_CancelableSearch.Exception != null)
+				{
+					<li>
+						<span class="dropdown-item-text">
+							<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
+						</span>
+					</li>
+				}
+				@if(_CancelableSearch.Searching)
+				{
+					<li>
+						<span class="dropdown-item-text">
+							<Spinner Type="SpinnerType.Dots" />
+						</span>
+					</li>
+				}
+				else
+				{
+					@if(Options.Count() == 0)
+					{
+						<li>
+						<span class="dropdown-item-text">
+							Enter a search term.
+						</span>
+					</li>
+					}
+					@foreach(var option in Options.Select((value, i) => new {i, value}))
+					{
+						<li><a class="dropdown-item" href="#" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
+					}
+				}
+			</ul>
 		</div>
 
 
-		<div class="input-group">
+		@* <div class="input-group">
 			
 		
 			<div class="dropdown">
@@ -64,7 +93,7 @@
 					}
 				</ul>
 			</div>
-		</div>
+		</div> *@
 	}
 	</div>
 	<div class="col">
