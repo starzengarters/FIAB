@@ -1,4 +1,7 @@
-window.SetFocusToElement = (element) => {
+window.SetFocusToElement = (id) => {
+	let element = document.getElementById(id);
 	console.log(element);
-	element.focus();
+	if(element) {
+		element.focus();
+	}
 };

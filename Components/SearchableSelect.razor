@@ -5,48 +5,52 @@
 
 @*TODO - Set the value of this to reflect the currently selected value*@
 
+<div class="row">
+	<div class="col">
+		Searching: @_CancelableSearch?.Searching ShowClass: @_CancelableSearch?.MenuShownClass Options: @Options.Count()
+	</div>
+</div>
 <div class="row mt-4">
 	<div class="col">
 	@if(_CancelableSearch != null)
 	{
-		<div class="dropdown">
-			<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-				@(Value != null ? $"{Value.Name} - {Value.ShortDescription}" : Placeholder)
-			</button>
-			<ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-				<li>
-					<span class="dropdown-item-text">
-						<InputText
-							@bind-Value="SearchTerm"
-							@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
-							@onkeyup=@((e) => KeyUp(e))
-							placeholder="@Placeholder" class="form-control" />
-					</span>
-				</li>
-				@if(_CancelableSearch.Exception != null)
-				{
-					<li>
-						<span class="dropdown-item-text">
-							<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
-						</span>
-					</li>
-				}
-				@if(_CancelableSearch.Searching)
-				{
-					<li>
-						<span class="dropdown-item-text">
-							<Spinner Type="SpinnerType.Dots" />
-						</span>
-					</li>
-				}
-				else
-				{
-					@foreach(var option in Options)
+		<div class="input-group">
+			<InputText
+				@bind-Value="SearchTerm"
+				@oninput="(e) => DoSearch(e.Value?.ToString() ?? string.Empty)"
+				@onkeyup=@((e) => KeyUp(e))
+				placeholder="@Placeholder" class="form-control" />
+		
+			<div class="dropdown">
+				<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+					@(Value != null ? $"{Value.Name} - {Value.ShortDescription}" : Placeholder)
+				</button>
+				<ul class="dropdown-menu @_CancelableSearch.MenuShownClass" aria-labelledby="dropdownMenuButton1">
+					@if(_CancelableSearch.Exception != null)
 					{
-						<li><a class="dropdown-item" href="#" @onclick=@(() => OptionClicked(option.Id))>@option.Name - @option.ShortDescription</a></li>
+						<li>
+							<span class="dropdown-item-text">
+								<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
+							</span>
+						</li>
 					}
-				}
-			</ul>
+					@if(_CancelableSearch.Searching)
+					{
+						<li>
+							<span class="dropdown-item-text">
+								<Spinner Type="SpinnerType.Dots" />
+							</span>
+						</li>
+					}
+					else
+					{
+						@foreach(var option in Options.Select((value, i) => new {i, value}))
+						{
+							<li><a class="dropdown-item" href="#" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
+						}
+					}
+				</ul>
+			</div>
 		</div>
 	}
 	</div>
@@ -105,7 +109,7 @@
 		public Task? Task { get; set; }
 		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
 		public bool Showing { get; set; } = false;
-		public string MenuShownClass => Showing ? "show is-active" : "";
+		public string MenuShownClass => Showing ? "show" : "";
 		
 		public CancellationTokenSource? TokenSource { get; set; }
 		public Exception? Exception;
@@ -130,6 +134,7 @@
 		if(evt.Key == "ArrowDown" && !(evt.AltKey || evt.CtrlKey || evt.ShiftKey))
 		{
 			Console.WriteLine("ArrowDown pressed! TODO: Focus");
+			await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item0");
 		}
 		await Task.CompletedTask;
 	}
@@ -213,6 +218,7 @@
 		// Hide the options by emptying the list.
 		SearchTerm = string.Empty;
 		Options = new List<Noun>();
+		_CancelableSearch!.Showing = false;
 	}
 	#endregion
 }
