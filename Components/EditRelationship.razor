@@ -46,16 +46,9 @@
 						<label for=@GetFormId("Object") class="form-label">
 							Object
 						</label>
-						<InputSelect class="form-select" id=@GetFormId("Object") @bind-Value=FormRelationship.ObjectId>
 						@* TODO - Do recursion and indentation for parent child relationships. *@
-							<option value="0"></option>
-						@foreach(var obj in Objects)
-						{
-							<option value="@obj.Id">@obj.Name</option>
-							@* TODO - Show the value of obj.ShortDescription*@
-						}
-						</InputSelect>
 						@* TODO - Provision for adding a new Object here, inline. *@
+						<NounSearchableSelect @bind-Value=FormRelationship.Object Search=SearchNouns Id=@GetFormId("Object") />
 					</div>
 				</div>
 				<div class="row">
@@ -264,6 +257,16 @@
 		ShowSuccessMessage = false;
 	}
 
+	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
+	{
+		using var db = Contexts.FIABContext.Create(Config);
+		var results = await db.Nouns.Where(n => n.Name.ToLower().StartsWith(searchTerm.ToLower()))
+		.AsNoTracking()
+		.Take(8)
+		.ToListAsync();
+		return results;
+	}
+
 	private async Task SubmitForm()
 	{
 		var encounteredError = false;
@@ -279,8 +282,6 @@
 				// Since <InputSelect /> only updates the id property make sure the full-fat property matches its id
 				// null-forgiveness because DB validation gives free error messages.
 				FormRelationship.RelationshipType = RelationshipTypes.SingleOrDefault(rt => rt.Id == FormRelationship.RelationshipTypeId)!;
-				FormRelationship.Object = Objects.SingleOrDefault(o => o.Id == FormRelationship.ObjectId)!;
-				
 
 				if(Editing)
 				{
