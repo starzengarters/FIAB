@@ -18,7 +18,8 @@
 					placeholder="@Placeholder"
 					class="form-control"
 					data-bs-toggle="dropdown"
-					id=@Id />
+					id=@Id
+					autocomplete="off" />
 			}
 			else
 			{
@@ -74,7 +75,17 @@
 					}
 					@foreach(var option in Options.Select((value, i) => new {i, value}))
 					{
-						<li><a class="dropdown-item" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
+						<li>
+							<a
+								class="dropdown-item"
+								href="#"
+								id="@(Id)-Item@(option.i)"
+								@onclick=@(() => OptionClicked(option.value.Id))
+								@onclick:preventDefault="true"
+							>
+								@option.value.Name - @option.value.ShortDescription
+							</a>
+						</li>
 					}
 				}
 			</ul>
