@@ -125,7 +125,7 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		
+		await Task.CompletedTask;
 		if(firstRender)
 		{
 			try
@@ -162,12 +162,6 @@
 				// We can work with it, reset it to the original value,
 				// and set the paremeter value to it upon a successful edit.
 				ResetForm();
-
-				var tasks = new List<Task>();
-				tasks.Add(SetRelationshipTypes());
-				tasks.Add(SetObjects());
-
-				await Task.WhenAll(tasks);
 			}
 			catch(Exception ex)
 			{
@@ -211,26 +205,6 @@
 		if(FormRelationship != null)
 		{
 			FormRelationship.Ended = new DateOnly();
-		}
-	}
-
-	private async Task SetRelationshipTypes()
-	{
-		if(RelationshipTypes.Count() == 0)
-		{
-			using var context = FIABContext.Create(Config);
-			RelationshipTypes = await context.RelationshipTypes.ToListAsync();// TODO this is horrifying and WILL blow-up at scale.  Need a searchable, streamable solution.
-		}
-	}
-
-	private async Task SetObjects()
-	{
-		if(Objects.Count() == 0)
-		{
-			using var context = FIABContext.Create(Config);
-			Objects = await context.Nouns
-				.Where(n => Relationship.Subject != null && n.Id != Relationship.Subject.Id)// Self-Reference loops are bad.
-				.ToListAsync();// TODO just like RelationshipTypes this is a lit bomb with a very short fuse.
 		}
 	}
 
