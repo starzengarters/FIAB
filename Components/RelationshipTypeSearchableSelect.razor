@@ -3,7 +3,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect T="RelationshipType" @bind-Value=Value Search=SearchRTs Id="Id" Placeholder="Placeholder" />
+<SearchableSelect T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id="Id" Placeholder="Placeholder" />
 
 @code
 {

@@ -3,7 +3,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect T="Noun" @bind-Value=Value Search=SearchNouns Id="Id" Placeholder="Placeholder" />
+<SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" />
 
 @code
 {
