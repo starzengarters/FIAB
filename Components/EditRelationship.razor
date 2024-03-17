@@ -29,16 +29,9 @@
 						<label for=@GetFormId("RelationshipType") class="form-label">
 							Relationship Type
 						</label>
-						<InputSelect class="form-select" id=@GetFormId("RelationshipType") @bind-Value=FormRelationship.RelationshipTypeId>
 						@* TODO - Do recursion and indentation for parent child relationships. *@
-							<option value="0"></option>
-						@foreach(var relType in RelationshipTypes)
-						{
-							<option value="@relType.Id">@relType.Name</option>
-							@* TODO - Show the value of relType.ShortDescription*@
-						}
-						</InputSelect>
 						@* TODO - Provision for adding a new RelationshipType here, inline. *@
+						<RelationshipTypeSearchableSelect @bind-Value=FormRelationship.RelationshipType Id=@GetFormId("RelationshipType") />
 					</div>
 				</div>
 				<div class="row">
@@ -278,11 +271,6 @@
 
 			if(FormRelationship != null)
 			{
-				// TODO - Never use <InputSelect /> again.
-				// Since <InputSelect /> only updates the id property make sure the full-fat property matches its id
-				// null-forgiveness because DB validation gives free error messages.
-				FormRelationship.RelationshipType = RelationshipTypes.SingleOrDefault(rt => rt.Id == FormRelationship.RelationshipTypeId)!;
-
 				if(Editing)
 				{
 					context.Attach(FormRelationship);
