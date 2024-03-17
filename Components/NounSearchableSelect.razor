@@ -3,7 +3,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<div class="row mt-4">
+<div class="row">
 	<div class="col">
 	@if(_CancelableSearch != null)
 	{
@@ -24,7 +24,7 @@
 			{
 				<div class="form-control form-control-sm my-0 py-0 bg-light">
 					<div class="row">
-						<div class="col-md-2">
+						<div class="col">
 							@Value?.Name
 						</div>
 					</div>
@@ -74,7 +74,7 @@
 					}
 					@foreach(var option in Options.Select((value, i) => new {i, value}))
 					{
-						<li><a class="dropdown-item" href="#" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
+						<li><a class="dropdown-item" id="@(Id)-Item@(option.i)" @onclick=@(() => OptionClicked(option.value.Id))>@option.value.Name - @option.value.ShortDescription</a></li>
 					}
 				}
 			</ul>
