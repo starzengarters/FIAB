@@ -1,0 +1,44 @@
+@using Microsoft.EntityFrameworkCore;
+@typeparam T
+
+@ChildContent
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public IEnumerable<T> Value { get; set; } = new List<T>();
+	
+	[Parameter]
+	public EventCallback<IEnumerable<T>> ValueChanged { get; set; }
+	
+	[Parameter]
+	public uint Page { get; set; } = 1;
+
+	[Parameter]
+	public uint PageSize { get; set; } = 5;
+
+	[Parameter]
+	public RenderFragment ChildContent { get; set; } = default!;
+
+	public List<T> FilteredList { get; private set; } = new List<T>();
+
+	protected override async Task OnParametersSetAsync()
+	{
+		Filter();
+		await Task.CompletedTask;
+	}
+
+	private void Filter()
+	{
+		Console.WriteLine("From Pagination.Filter()");
+		var pageSize = (int)PageSize;
+		var page = (int)Page;
+		
+		FilteredList = Value
+			.Skip((pageSize * (page - 1)))
+			.Take(pageSize)
+			.ToList();
+	}
+	
+}
