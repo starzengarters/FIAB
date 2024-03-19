@@ -65,13 +65,16 @@
 
 	private async Task SearchTermChanged(string input)
 	{
-		SearchTerm = input;
-		await InvokeAsync(DoSearch);
+		if(input != SearchTerm)
+		{
+			SearchTerm = input;
+			await InvokeAsync(DoSearch);
+		}
 	}
 
 	protected async Task DoSearch()
 	{
-		Console.WriteLine($"ST: \"{SearchTerm}\"");
+		// Console.WriteLine($"\tST: \"{SearchTerm}\"");
 
 		// Cancel any other running search
 		CancelSearch();
@@ -83,22 +86,26 @@
 			TokenSource = ts,
 			Task = Task.Run(async () =>
 			{
-				// Wait for the user to stop typing before querying DB.
-				await Task.Delay(500);
-
-				// If our Token didn't get canceled query the DB.
-				if (ts.Token.IsCancellationRequested == false)
+				await InvokeAsync(async () =>
 				{
-					var results = await Search(SearchTerm);
-					Console.WriteLine($"\tSearch({SearchTerm}): {results.Count()}");
+					// Wait for the user to stop typing before querying DB.
+					await Task.Delay(500);
 
-					// Trip to the DB could've taken a while, make sure we're still not cancelled.
-					if(ts.Token.IsCancellationRequested == false)
+					// If our Token didn't get canceled query the DB.
+					if (ts.Token.IsCancellationRequested == false)
 					{
-						// It sounds bonkers, but does this also need wrapped in InvokeAsync?
-						await InvokeAsync(async () => await ValueChanged.InvokeAsync(results));
+						var results = await Search(SearchTerm);
+						// Console.WriteLine($"\tSearch({SearchTerm}): {results.Count()}");
+
+						// Trip to the DB could've taken a while, make sure we're still not cancelled.
+						if(ts.Token.IsCancellationRequested == false)
+						{
+							// It sounds bonkers, but does this also need wrapped in InvokeAsync?
+							await ValueChanged.InvokeAsync(results);
+						}
 					}
-				}
+				});
+				
 			}, ts.Token)
 		};
 
