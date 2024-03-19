@@ -2,6 +2,7 @@
 @using FIAB.Models;
 @using FIAB.Contexts;
 @using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Components.Forms
 @using System.Linq
 @inject IConfiguration Config
 
@@ -21,6 +22,16 @@
 				</div>
 				<div class="col-md-4 text-end">
 					<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<SearchListing @ref=Search @bind-Value=Listing Search=FilterListing Placeholder="Search Nouns..." />
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					Pagination stuff goes here.
 				</div>
 			</div>
 			<div class="row">
@@ -48,6 +59,11 @@
 					</tbody>
 				</table>
 			</div>
+			<div class="row">
+				<div class="col">
+					Pagination stuff goes here, too.
+				</div>
+			</div>
 		</ShowLoading>
 	</Authorized>
 </AuthorizeView>
@@ -58,17 +74,19 @@
 	private bool Loading = true;
 	private Exception? Error;
 
-	private List<Noun> Listing = new List<Noun>();
+	private int PageSize = 5;
+	private int Page = 1;
+	private SearchListing<Noun> Search = new SearchListing<Noun>();
+	private IEnumerable<Noun> Listing = new List<Noun>();
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
+		await Task.CompletedTask;
 		try
 		{
 			if(firstRender)
 			{
-				using var context = FIABContext.Create(Config);
-				// TODO - Pagination and Filtering will be needed soon.
-				Listing = await context.Nouns.ToListAsync();
+				// No need for anything here, the SearchListing will auto-load for us.
 			}
 		}
 		catch(Exception ex)
@@ -85,5 +103,36 @@
 	private FIABContext GetContext()
 	{
 		return FIABContext.Create(Config);
+	}
+
+	private async Task<IEnumerable<Noun>> FilterListing(string filterTerm)
+	{
+		try
+		{
+			Loading = true;
+			using var context = FIABContext.Create(Config);
+			var query = context.Nouns.Where(n => true);
+
+			if(!string.IsNullOrWhiteSpace(filterTerm))
+			{
+				query = query.Where(n =>
+					n.Name.ToLower().Contains(filterTerm.ToLower())
+					|| (n.ShortDescription != null && n.ShortDescription.ToLower().Contains(filterTerm.ToLower())));
+			}
+
+			return await query
+				.Skip(PageSize * (Page - 1))
+				.Take(PageSize)
+				.ToListAsync();
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			return new List<Noun>();
+		}
+		finally
+		{
+			Loading = false;
+		}
 	}
 }
