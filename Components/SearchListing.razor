@@ -37,6 +37,8 @@
 	[EditorRequired]
 	public Func<string, Task<IEnumerable<T>>> Search { get; set; } = default!;
 	
+	public bool Searching { get; set; } = false;
+	
 	private CancelableOperation SearchOp = new CancelableOperation { TokenSource = new CancellationTokenSource(), Task = Task.CompletedTask };
 	private class CancelableOperation
 	{
@@ -90,6 +92,7 @@
 			{
 				await InvokeAsync(async () =>
 				{
+					Searching = true;
 					// Wait for the user to stop typing before querying DB.
 					await Task.Delay(500);
 
@@ -104,6 +107,7 @@
 						{
 							// It sounds bonkers, but does this also need wrapped in InvokeAsync?
 							await ValueChanged.InvokeAsync(results);
+							Searching = false;
 						}
 					}
 				});
