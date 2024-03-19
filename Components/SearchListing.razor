@@ -7,8 +7,8 @@
 			<Icon Name="IconName.Search" />
 			<InputText
 				@bind-Value=SearchTerm
-				@oninput=@((e) => DoSearch(e.Value?.ToString() ?? string.Empty))
-				@onchange=@((e) => DoSearch(e.Value?.ToString() ?? string.Empty))
+				@oninput=@((e) => SearchTermChanged(e.Value?.ToString() ?? string.Empty))
+				@onchange=@((e) => DoSearch())
 				placeholder="@Placeholder"
 				class="form-control"
 				autocomplete="off" />
@@ -45,9 +45,7 @@
 	{
 		if(firstRender)
 		{
-			// Parameters have changed, re-run the search.
-			var results = await Search(SearchTerm);
-			await ValueChanged.InvokeAsync(results);
+			await InvokeAsync(DoSearch);
 		}
 	}
 
@@ -64,45 +62,45 @@
 		}
 	}
 
-	protected async Task DoSearch(string value)
+	private async Task SearchTermChanged(string input)
 	{
-		Console.WriteLine($"\"{value}\"");
-		if(SearchTerm != value)
+		SearchTerm = input;
+		await InvokeAsync(DoSearch);
+	}
+
+	protected async Task DoSearch()
+	{
+		Console.WriteLine($"ST: \"{SearchTerm}\"");
+
+		// Cancel any other running search
+		CancelSearch();
+
+		// Make a cancelable request to the API and process the response.
+		var ts = new CancellationTokenSource();
+		SearchOp = new CancelableOperation
 		{
-			// Update the value bound to the search input.
-			SearchTerm = value;
-
-			// Cancel any other running search
-			CancelSearch();
-
-			// Make a cancelable request to the API and process the response.
-			var ts = new CancellationTokenSource();
-			SearchOp = new CancelableOperation
+			TokenSource = ts,
+			Task = Task.Run(async () =>
 			{
-				TokenSource = ts,
-				Task = Task.Run(async () =>
-				{
-					if(string.IsNullOrWhiteSpace(SearchTerm))
-					{
-						return;
-					}
+				// Wait for the user to stop typing before querying DB.
+				await Task.Delay(500);
 
-					// Wait for the user to stop typing before querying DB.
-					await Task.Delay(500);
+				// If our Token didn't get canceled query the DB.
+				if (ts.Token.IsCancellationRequested == false)
+				{
 					var results = await Search(SearchTerm);
 					Console.WriteLine($"\tSearch({SearchTerm}): {results.Count()}");
 
-					// If our Token didn't get canceled query the DB.
-					if (ts.Token.IsCancellationRequested == false)
+					// Trip to the DB could've taken a while, make sure we're still not cancelled.
+					if(ts.Token.IsCancellationRequested == false)
 					{
-						await ValueChanged.InvokeAsync(results);
-						StateHasChanged();
+						// It sounds bonkers, but does this also need wrapped in InvokeAsync?
+						await InvokeAsync(async () => await ValueChanged.InvokeAsync(results));
 					}
-				}, ts.Token)
-			};
+				}
+			}, ts.Token)
+		};
 
-			InvokeAsync(async () => await SearchOp.Task);
-			await Task.CompletedTask;
-		}
+		await InvokeAsync(async () => await SearchOp.Task);
 	}
 }
