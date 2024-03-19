@@ -19,6 +19,7 @@
 @code
 {
 	private string SearchTerm = string.Empty;
+	private bool Initialized = false;
 
 	[Parameter]
 	[EditorRequired]
@@ -41,11 +42,11 @@
 		public required Task Task;
 	}
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
+	protected override async Task OnParametersSetAsync()
 	{
-		if(firstRender)
+		if(!Initialized)
 		{
-			await InvokeAsync(DoSearch);
+			await InvokeAsync(Initialize);
 		}
 	}
 
@@ -102,5 +103,15 @@
 		};
 
 		await InvokeAsync(async () => await SearchOp.Task);
+	}
+
+	public async Task Initialize()
+	{
+		if(Search != null)
+		{
+			var results = await Search(SearchTerm);
+			await InvokeAsync(async () => await ValueChanged.InvokeAsync(results));
+			Initialized = true;
+		}
 	}
 }
