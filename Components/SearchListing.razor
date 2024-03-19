@@ -4,7 +4,9 @@
 <div class="row">
 	<div class="col">
 		<div class="input-group">
-			<Icon Name="IconName.Search" />
+			<span class="input-group-text">
+				<Icon Name="IconName.Search" />
+			</span>
 			<InputText
 				@bind-Value=SearchTerm
 				@oninput=@((e) => SearchTermChanged(e.Value?.ToString() ?? string.Empty))
