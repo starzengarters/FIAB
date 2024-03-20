@@ -36,29 +36,31 @@
 			</div>
 			<div class="row">
 				<ShowLoading Loading=_Searching>
-				<table class="table table-striped">
-					<thead>
-						<tr>
-							<th scope="col" class="col-8">Name</th>
-							<th scope="col" class="col-4">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-					@foreach(var noun in Listing)
-					{
-						<tr>
-							<td>
-								@noun.Name<br/>
-								<span style="font-size: smaller;">@noun.ShortDescription</span>
-							</td>
-							<td class="text-end">
-								<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
-								<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
-							</td>
-						</tr>
-					}
-					</tbody>
-				</table>
+				<FiabPager T="Noun" @ref=Paging @bind-Value=Listing Page=1 PageSize=3>
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th scope="col" class="col-8">Name</th>
+								<th scope="col" class="col-4">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+						@foreach(var noun in Paging.FilteredList)
+						{
+							<tr>
+								<td>
+									@noun.Name<br/>
+									<span style="font-size: smaller;">@noun.ShortDescription</span>
+								</td>
+								<td class="text-end">
+									<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+									<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+								</td>
+							</tr>
+						}
+						</tbody>
+					</table>
+				</FiabPager>
 				</ShowLoading>
 			</div>
 			<div class="row">
@@ -75,10 +77,8 @@
 {
 	private bool Loading = true;
 	private Exception? Error;
-
-	private int PageSize = 5;
-	private int Page = 1;
 	private SearchListing<Noun> Search = new SearchListing<Noun>();
+	private FiabPager<Noun> Paging = new FiabPager<Noun>();
 	private bool _Searching => Search?.Searching ?? false;
 	private IEnumerable<Noun> Listing = new List<Noun>();
 
@@ -111,6 +111,7 @@
 
 	private async Task<IEnumerable<Noun>> FilterListing(string filterTerm)
 	{
+		await Task.CompletedTask;
 		try
 		{
 			using var context = FIABContext.Create(Config);
@@ -123,10 +124,7 @@
 					|| (n.ShortDescription != null && n.ShortDescription.ToLower().Contains(filterTerm.ToLower())));
 			}
 
-			return await query
-				.Skip(PageSize * (Page - 1))
-				.Take(PageSize)
-				.ToListAsync();
+			return query;
 		}
 		catch(Exception ex)
 		{

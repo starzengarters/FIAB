@@ -1,10 +1,14 @@
+@using FIAB.Contexts;
 @using Microsoft.EntityFrameworkCore;
-@typeparam T
+@inject IConfiguration Config
+@typeparam T where T : Entity
 
 @ChildContent
 
 @code
 {
+	// TODO Make this smart enough to hunt for query parameters so folks can deep-link to a specific page.
+
 	[Parameter]
 	[EditorRequired]
 	public IEnumerable<T> Value { get; set; } = new List<T>();
@@ -16,26 +20,45 @@
 	public uint Page { get; set; } = 1;
 
 	[Parameter]
-	public uint PageSize { get; set; } = 5;
+	public uint PageSize { get; set; } = 25;
 
 	[Parameter]
 	public RenderFragment ChildContent { get; set; } = default!;
 
 	public List<T> FilteredList { get; private set; } = new List<T>();
 
+	private bool Initialized = false;
+
 	protected override async Task OnParametersSetAsync()
 	{
-		Filter();
+		if(!Initialized)
+		{
+			Filter();
+			Initialized = true;
+		}
 		await Task.CompletedTask;
 	}
 
 	private void Filter()
 	{
 		Console.WriteLine("From Pagination.Filter()");
+		var queryable = Value.AsQueryable();
+
+		// Shenanigans if Value is a detatched IQueryable.
+		// Try to attach it to a live dbContext.
+		// Thank You, https://stackoverflow.com/a/30719538 for this glorious hack.
+		using var context = FIABContext.Create(Config);
+		if(Value is IQueryable)
+		{
+			var x = Value.AsQueryable();
+			var mySet = context.Set<T>().AsQueryable();
+			queryable = mySet.Provider.CreateQuery<T>(x.Expression);
+		}
+
 		var pageSize = (int)PageSize;
 		var page = (int)Page;
 		
-		FilteredList = Value
+		FilteredList = queryable
 			.Skip((pageSize * (page - 1)))
 			.Take(pageSize)
 			.ToList();
