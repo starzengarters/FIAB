@@ -10,16 +10,6 @@
 <div class="container">
 <DisplayError Error=Error />
 
-@if(ShowSuccessMessage)
-{
-	<div class="row">
-		<div class="col">
-			<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
-		</div>
-		<strong>Success</strong><br/>
-	</div>
-}
-
 <AuthorizeView Roles=@Constants.Roles.User Context="auth">
 	<NotAuthorized>
 		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
@@ -30,50 +20,7 @@
 				@(Editing ? $"Editing {Item.Id}" : "Create")
 			</h1>
 			
-			<EditForm EditContext="EC" OnSubmit="SubmitForm">
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("name") class="form-label">
-							Name
-						</label>
-						<InputText @bind-Value=Item.Name id=@GetFormId("name") class="form-control" />
-						<ValidationMessage For=@(() => Item.Name) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("ShortDescription") class="form-label">
-							Short Description
-						</label>
-						<InputText
-							@bind-Value=Item.ShortDescription
-							id=@GetFormId("ShortDescription")
-							class="form-control"
-							placeholder="Short description returned in search results" />
-						<ValidationMessage For=@(() => Item.ShortDescription) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("Details") class="form-label">
-							Details
-						</label>
-						<InputTextArea @bind-Value=Item.Details id=@GetFormId("Details") class="form-control" rows="7" />
-						<ValidationMessage For=@(() => Item.Details) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<DataAnnotationsValidator/>
-						<ValidationSummary/>
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<button type="submit" class="btn btn-primary">Submit</button>
-					</div>
-				</div>
-			</EditForm>
+			<EditNoun @bind-Value=Item />
 		</ShowLoading>
 	</Authorized>
 </AuthorizeView>
@@ -84,15 +31,10 @@
 	[Parameter]
 	public string IdString { get; set; } = string.Empty;
 	private Noun Item = new Noun();
-	private EditContext EC = new EditContext(new Noun());
 	private bool Editing => Item.Id != 0;
 
 	private bool Loading = true;
 	private Exception? Error;
-	private string SuccessMessage = string.Empty;
-	private bool ShowSuccessMessage = false;
-	private string FormId = System.Guid.NewGuid().ToString();
-	private string GetFormId(string name) => $"{FormId}-{name}";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -129,55 +71,5 @@
 	{
 		using var context = GetContext();
 		Item = await context.Nouns.SingleAsync(n => n.Id == id);
-	}
-
-	private async Task ShowSuccess(string message, int seconds = 5)
-	{
-		// TODO spice this up as a component that uses cancellationTokens.
-		SuccessMessage = message;
-		ShowSuccessMessage = true;
-
-		await Task.Delay(seconds * 1000);
-		ShowSuccessMessage = false;
-	}
-
-	private async Task SubmitForm()
-	{
-		var encounteredError = false;
-		try
-		{
-			Error = null;
-			Loading = true;
-			using var context = GetContext();
-
-			if(Editing)
-			{
-				context.Attach(Item);
-				context.Update(Item);
-				await context.SaveChangesAsync();
-			}
-			else
-			{
-				await context.Nouns.AddAsync(Item);
-				await context.SaveChangesAsync();
-				
-			}
-
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-			encounteredError = true;
-		}
-		finally
-		{
-			Loading = false;
-
-			if(!encounteredError)
-			{
-				var action = Editing ? "edited" : "created";
-				await ShowSuccess($"{DateTime.Now} Noun {Item.Id} {action}.");
-			}
-		}
 	}
 }

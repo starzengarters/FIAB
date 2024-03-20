@@ -1,0 +1,136 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using FIAB.Contexts;
+@inject IConfiguration Config
+
+<DisplayError Error=Error />
+
+@if(ShowSuccessMessage)
+{
+	<div class="row">
+		<div class="col">
+			<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+		</div>
+		<strong>Success</strong><br/>
+	</div>
+}
+
+<EditForm EditContext="EC" OnSubmit="SubmitForm">
+	<div class="row mt-3">
+		<div class="col">
+			<label for=@GetFormId("name") class="form-label">
+				Name
+			</label>
+			<InputText @bind-Value=Value.Name id=@GetFormId("name") class="form-control" />
+			<ValidationMessage For=@(() => Value.Name) />
+		</div>
+	</div>
+	<div class="row mt-3">
+		<div class="col">
+			<label for=@GetFormId("ShortDescription") class="form-label">
+				Short Description
+			</label>
+			<InputText
+				@bind-Value=Value.ShortDescription
+				id=@GetFormId("ShortDescription")
+				class="form-control"
+				placeholder="Short description returned in search results" />
+			<ValidationMessage For=@(() => Value.ShortDescription) />
+		</div>
+	</div>
+	<div class="row mt-3">
+		<div class="col">
+			<label for=@GetFormId("Details") class="form-label">
+				Details
+			</label>
+			<InputTextArea @bind-Value=Value.Details id=@GetFormId("Details") class="form-control" rows="7" />
+			<ValidationMessage For=@(() => Value.Details) />
+		</div>
+	</div>
+	<div class="row mt-3">
+		<div class="col">
+			<DataAnnotationsValidator/>
+			<ValidationSummary/>
+		</div>
+	</div>
+	<div class="row mt-3">
+		<div class="col">
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</div>
+	</div>
+</EditForm>
+
+@code
+{
+    [Parameter]
+    [EditorRequired]
+    public Noun Value { get; set; } = new Noun();
+
+    [Parameter]
+    public EventCallback<Noun> ValueChanged { get; set; }
+
+    private EditContext EC = new EditContext(new Noun());
+    private bool Editing => Value.Id != 0;
+
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
+	
+	private bool Loading = true;
+	private Exception? Error;
+	private string SuccessMessage = string.Empty;
+	private bool ShowSuccessMessage = false;
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task ShowSuccess(string message, int seconds = 5)
+	{
+		// TODO spice this up as a component that uses cancellationTokens.
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+
+		await Task.Delay(seconds * 1000);
+		ShowSuccessMessage = false;
+	}
+
+	private async Task SubmitForm()
+	{
+		var encounteredError = false;
+		try
+		{
+			Error = null;
+			Loading = true;
+			await Task.Delay(1000);
+			using var context = GetContext();
+
+			if(Editing)
+			{
+				context.Attach(Value);
+				context.Update(Value);
+				await context.SaveChangesAsync();
+			}
+			else
+			{
+				await context.Nouns.AddAsync(Value);
+				await context.SaveChangesAsync();
+				
+			}
+
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			encounteredError = true;
+		}
+		finally
+		{
+			Loading = false;
+
+			if(!encounteredError)
+			{
+				var action = Editing ? "edited" : "created";
+				await ShowSuccess($"{DateTime.Now} Noun {Value.Id} {action}.");
+			}
+		}
+	}
+}
