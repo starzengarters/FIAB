@@ -31,7 +31,7 @@
 			</div>
 			<div class="row">
 				<ShowLoading Loading=_Searching Text="Filtering...">
-				<FiabPager T="Noun" @ref=Paging @bind-Value=Listing>
+				<FiabPager @ref=Paging @bind-Value=Listing>
 					<table class="table table-striped">
 						<thead>
 							<tr>
@@ -68,8 +68,8 @@
 	private bool Loading = true;
 	private Exception? Error;
 	private SearchListing<Noun> Search = new SearchListing<Noun>();
-	private FiabPager<Noun> Paging = new FiabPager<Noun>();
 	private bool _Searching => Search?.Searching ?? false;
+	private FiabPager<Noun> Paging = new FiabPager<Noun>();
 	private IEnumerable<Noun> Listing = new List<Noun>();
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
