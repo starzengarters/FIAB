@@ -36,23 +36,31 @@
 			</div>
 			<div class="row mt-3 mb-3">
 				<div class="col">
-					<h2>Relationships (@Relationships.Count)</h2>
+					<h2>Relationships</h2>
 				</div>
 				<div class="col text-end">
 					<Button Color="ButtonColor.Primary" Size="Size.Large" Outline="true" Disabled=AddingRelationship @onclick=ShowAddRelationship>Add Relationship</Button>
 				</div>
 			</div>
-			
-			<div class="row row-cols-1 row-cols-lg-3 g-4">
-				@if(AddingRelationship)
-				{
-					<EditRelationship Relationship=RelationshipToAdd OnCancel=HideAddRelationship />
-				}
-				@foreach(var rel in Relationships)
-				{
-					<DisplayRelationship Relationship="rel" CanEdit="true" />
-				}
+			<div class="row">
+				<div class="col">
+					<SearchListing @ref=Search @bind-Value=Relationships Search=FilterListing Placeholder="Search Relationships..." />
+				</div>
 			</div>
+			<ShowLoading Loading=_Searching Text="Filtering...">
+				<FiabPager @ref=Paging @bind-Value=Relationships>
+					<div class="row row-cols-1 row-cols-lg-3 g-4">
+						@if(AddingRelationship)
+						{
+							<EditRelationship Relationship=RelationshipToAdd OnCancel=HideAddRelationship />
+						}
+						@foreach(var rel in Paging.FilteredList)
+						{
+							<DisplayRelationship Relationship="rel" CanEdit="true" />
+						}
+					</div>
+				</FiabPager>
+			</ShowLoading>
 		</ShowLoading>
 	</Authorized>
 </AuthorizeView>
@@ -67,7 +75,11 @@
 	private bool Loading = true;
 	private Exception? Error;
 	private Noun? Item;
-	private List<Relationship> Relationships = new List<Relationship>();
+	private IEnumerable<Relationship> Relationships = new List<Relationship>();
+
+	private SearchListing<Relationship> Search = new SearchListing<Relationship>();
+	private bool _Searching => Search?.Searching ?? false;
+	private FiabPager<Relationship> Paging = new FiabPager<Relationship>();
 
 	private bool AddingRelationship = false;
 	private Relationship RelationshipToAdd = new Relationship();
@@ -84,7 +96,7 @@
 			Loading = true;
 			StateHasChanged();
 
-			await SetRelationships();
+			await Search.Initialize();
 			AddingRelationship = false;
 		}
 		finally
@@ -109,7 +121,7 @@
 			if(firstRender)
 			{
 				Id = int.Parse(IdString);
-				var tasks = new List<Task> { SetItem(), SetRelationships() };
+				var tasks = new List<Task> { SetItem() };
 				await Task.WhenAll(tasks);
 			}
 		}
@@ -135,18 +147,43 @@
 		Item = await context.Nouns.SingleAsync(n => n.Id == Id);
 	}
 
-	private async Task SetRelationships()
+	private async Task<IEnumerable<Relationship>> FilterListing(string filterTerm)
 	{
-		using var context = GetContext();
-		Relationships = await context.Relationships
-			.Include(r => r.Subject)
-			.Include(r => r.RelationshipType)
-			.Include(r => r.Object)
-			.Where(r =>
-				(r.Subject != null && r.Subject.Id == Id)
-				||(r.Object != null && r.Object.Id == Id))
-			.OrderBy(r => r.Subject!.Id == Id)
-			.ThenBy(r => r.Id)
-			.ToListAsync();
+		await Task.CompletedTask;
+		try
+		{
+			using var context = FIABContext.Create(Config);
+			var query = context.Relationships
+				.Include(r => r.Subject)
+				.Include(r => r.RelationshipType)
+				.Include(r => r.Object)
+				.Where(r =>
+					(r.Subject != null && r.Subject.Id == Id)
+					||(r.Object != null && r.Object.Id == Id));
+
+			if(!string.IsNullOrWhiteSpace(filterTerm))
+			{
+				query = query.Where(r =>
+					(r.Subject!.Name.ToLower().Contains(filterTerm.ToLower())
+						|| (r.Subject!.ShortDescription != null && r.Subject!.ShortDescription.ToLower().Contains(filterTerm.ToLower()))
+					)
+					|| (r.Object!.Name.ToLower().Contains(filterTerm.ToLower())
+						|| (r.Object!.ShortDescription != null && r.Object!.ShortDescription.ToLower().Contains(filterTerm.ToLower()))
+					)
+					|| (r.RelationshipType!.Name.ToLower().Contains(filterTerm.ToLower())
+						|| (r.RelationshipType!.ShortDescription != null && r.RelationshipType!.ShortDescription.ToLower().Contains(filterTerm.ToLower()))
+					)
+				);
+			}
+
+			return query
+				.OrderBy(r => r.Subject!.Id == Id)
+				.ThenBy(r => r.Id);
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			return new List<Relationship>();
+		}
 	}
 }
