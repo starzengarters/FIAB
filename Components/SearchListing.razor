@@ -105,9 +105,8 @@
 						// Trip to the DB could've taken a while, make sure we're still not cancelled.
 						if(ts.Token.IsCancellationRequested == false)
 						{
-							// It sounds bonkers, but does this also need wrapped in InvokeAsync?
+							Searching = false;// Doing this first so it's caught when ValueChanged is invoked.
 							await ValueChanged.InvokeAsync(results);
-							Searching = false;
 						}
 					}
 				});
