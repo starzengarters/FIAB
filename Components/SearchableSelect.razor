@@ -70,6 +70,10 @@
 							{
 								<span class="dropdown-item-text">
 									<Icon Name="IconName.ExclamationCircle" class="me-2" /> No results start with "@SearchTerm"
+									@if(AddOptionFragment != null)
+									{
+										@AddOptionFragment
+									}
 								</span>
 							}
 					</li>
@@ -123,6 +127,9 @@
 	[Parameter]
 	public Func<T, string> GetDescription { get; set; } = GetDescriptionDefault;
 	public string _Description => Value == null ? string.Empty : GetDescription(Value);
+
+	[Parameter]
+	public RenderFragment? AddOptionFragment { get; set; }
 
 	private string SearchTerm { get; set; } = string.Empty;
 	private CancelableSearch _CancelableSearch = new CancelableSearch();

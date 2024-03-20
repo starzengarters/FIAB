@@ -3,7 +3,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" />
+<SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=AddOptionFragment />
 
 @code
 {
@@ -20,6 +20,9 @@
 
 	[Parameter]
 	public string? Placeholder { get; set; } = "Nouns starting with...";
+
+	[Parameter]
+	public RenderFragment AddOptionFragment { get; set; } = default!;
 
 	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
 	{
