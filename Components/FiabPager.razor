@@ -14,7 +14,14 @@
 	NextLinkIcon="IconName.ChevronRight"
 	LastLinkIcon="IconName.ChevronDoubleRight" />
 
-@ChildContent
+@if(Records == 0)
+{
+	<p>No records.</p>
+}
+else
+{
+	@ChildContent
+}
 
 <Pagination
 	ActivePageNumber=Page
