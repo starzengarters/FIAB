@@ -3,7 +3,34 @@
 @inject IConfiguration Config
 @typeparam T where T : Entity
 
+<Pagination
+	ActivePageNumber=Page
+	TotalPages=Pages
+	PageChanged=OnPageChangedAsync
+	DisplayPages="5"
+	Alignment="Alignment.Center"
+	FirstLinkIcon="IconName.ChevronDoubleLeft"
+	PreviousLinkIcon="IconName.ChevronLeft"
+	NextLinkIcon="IconName.ChevronRight"
+	LastLinkIcon="IconName.ChevronDoubleRight" />
+
 @ChildContent
+
+<Pagination
+	ActivePageNumber=Page
+	TotalPages=Pages
+	PageChanged=OnPageChangedAsync
+	DisplayPages="5"
+	Alignment="Alignment.Center"
+	FirstLinkIcon="IconName.ChevronDoubleLeft"
+	PreviousLinkIcon="IconName.ChevronLeft"
+	NextLinkIcon="IconName.ChevronRight"
+	LastLinkIcon="IconName.ChevronDoubleRight" />
+<div class="row">
+	<div class="col text-center muted">
+		@Records records total
+	</div>
+</div>
 
 @code
 {
@@ -17,13 +44,13 @@
 	public EventCallback<IEnumerable<T>> ValueChanged { get; set; }
 	
 	[Parameter]
-	public uint Page { get; set; } = 1;
-
-	[Parameter]
-	public uint PageSize { get; set; } = 25;
-
-	[Parameter]
 	public RenderFragment ChildContent { get; set; } = default!;
+
+	private int Page = 1;
+	private int PageSize = 25;
+	private int Records = 0;
+	private int Pages => (int) Math.Ceiling(Records/(double)PageSize);
+
 
 	public List<T> FilteredList { get; private set; } = new List<T>();
 
@@ -37,6 +64,12 @@
 			Initialized = true;
 		}
 		await Task.CompletedTask;
+	}
+
+	private async Task OnPageChangedAsync(int newPageNumber)
+	{
+		Page = newPageNumber;
+		await Filter();
 	}
 
 	private async Task Filter()
@@ -62,6 +95,8 @@
 			.Skip((pageSize * (page - 1)))
 			.Take(pageSize)
 			.ToListAsync();
+		
+		Records = queryable.Count();
 	}
 	
 }
