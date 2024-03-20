@@ -24,29 +24,38 @@
 				</div>
 			</div>
 			<div class="row">
-				<table class="table table-striped">
-					<thead>
-						<tr>
-							<th scope="col" class="col-8">Name</th>
-							<th scope="col" class="col-4">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-					@foreach(var rt in Listing)
-					{
-						<tr>
-							<td>
-								@rt.Name<br/>
-								<span style="font-size: smaller;">@rt.ShortDescription</span>
-							</td>
-							<td class="text-end">
-								<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
-								<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
-							</td>
-						</tr>
-					}
-					</tbody>
-				</table>
+				<div class="col">
+					<SearchListing @ref=Search @bind-Value=Listing Search=FilterListing Placeholder="Search Nouns..." />
+				</div>
+			</div>
+			<div class="row">
+				<ShowLoading Loading=_Searching Text="Filtering...">
+					<FiabPager @ref=Paging @bind-Value=Listing>
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<th scope="col" class="col-8">Name</th>
+									<th scope="col" class="col-4">Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+							@foreach(var rt in Paging.FilteredList)
+							{
+								<tr>
+									<td>
+										@rt.Name<br/>
+										<span style="font-size: smaller;">@rt.ShortDescription</span>
+									</td>
+									<td class="text-end">
+										<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+										<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{rt.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+									</td>
+								</tr>
+							}
+							</tbody>
+						</table>
+					</FiabPager>
+				</ShowLoading>
 			</div>
 		</ShowLoading>
 	</Authorized>
@@ -58,7 +67,11 @@
 	private bool Loading = true;
 	private Exception? Error;
 
-	private List<RelationshipType> Listing = new List<RelationshipType>();
+	private SearchListing<RelationshipType> Search = new SearchListing<RelationshipType>();
+	private bool _Searching => Search?.Searching ?? false;
+	private FiabPager<RelationshipType> Paging = new FiabPager<RelationshipType>();
+
+	private IEnumerable<RelationshipType> Listing = new List<RelationshipType>();
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -66,12 +79,7 @@
 		{
 			if(firstRender)
 			{
-				using var context = FIABContext.Create(Config);
-				// TODO - Pagination and Filtering will be needed soon.
-				Listing = await context.RelationshipTypes
-					.OrderByDescending(rt => rt.Parent)
-					.ThenBy(rt => rt.Name)
-					.ToListAsync();
+				await Task.CompletedTask;
 			}
 		}
 		catch(Exception ex)
@@ -88,5 +96,29 @@
 	private FIABContext GetContext()
 	{
 		return FIABContext.Create(Config);
+	}
+
+	private async Task<IEnumerable<RelationshipType>> FilterListing(string filterTerm)
+	{
+		await Task.CompletedTask;
+		try
+		{
+			using var context = FIABContext.Create(Config);
+			var query = context.RelationshipTypes.Where(n => true);
+
+			if(!string.IsNullOrWhiteSpace(filterTerm))
+			{
+				query = query.Where(n =>
+					n.Name.ToLower().Contains(filterTerm.ToLower())
+					|| (n.ShortDescription != null && n.ShortDescription.ToLower().Contains(filterTerm.ToLower())));
+			}
+
+			return query;
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			return new List<RelationshipType>();
+		}
 	}
 }
