@@ -1,0 +1,68 @@
+@if(ShowSuccessMessage)
+{
+	<div class="row">
+		<div class="col">
+			<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+		</div>
+		<strong>Success</strong><br/>
+	</div>
+}
+
+@code
+{
+	private bool ShowSuccessMessage = false;
+	private string SuccessMessage = string.Empty;
+
+	private CancelableOperation SuccessOp = new CancelableOperation { TokenSource = new CancellationTokenSource(), Task = Task.CompletedTask };
+	private class CancelableOperation
+	{
+		public required CancellationTokenSource TokenSource;
+		public required Task Task;
+		public void Cancel()
+		{
+			if(TokenSource != null)
+			{
+				var eolStatuses = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+				var problem = eolStatuses.Any(st => st == Task.Status);
+				if (!problem)
+				{
+					TokenSource.Cancel();
+				}
+			}
+		}
+	}
+
+	public void ShowSuccess(string message, int seconds = 5)
+	{
+		// Cancel any other running operation
+		SuccessOp.Cancel();
+		
+		// Show our success message
+		Console.WriteLine($"\tHello from ShowSuccess({message})");
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+		InvokeAsync(StateHasChanged);
+
+		// Assign SuccessOp a fresh task to hide the message in seconds..
+		var ts = new CancellationTokenSource();
+		SuccessOp = new CancelableOperation
+		{
+			TokenSource = ts,
+			Task = Task.Run(async () => 
+			{
+				await Task.Delay(seconds * 1000);
+				if (ts.Token.IsCancellationRequested == false)
+				{
+					Console.WriteLine($"\tHiding ShowSuccess({message})");
+					ShowSuccessMessage = false;
+					InvokeAsync(StateHasChanged);
+				}
+			}, ts.Token)
+		};
+
+		// Squelching compiler warning, we are delibrately doing a fire-and-forget.
+		#pragma warning disable 4014
+		InvokeAsync(async () => await SuccessOp.Task);
+		#pragma warning restore 4014
+	}
+}
