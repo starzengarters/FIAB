@@ -13,9 +13,7 @@
 		<strong>Success</strong><br/>
 	</div>
 }
-<p>
-	Internal WTF: @Wtf
-</p>
+
 <EditForm EditContext="EC" OnSubmit="SubmitForm">
 	<div class="row mt-3">
 		<div class="col">
@@ -56,11 +54,10 @@
 	</div>
 	<div class="row mt-3">
 		<div class="col">
-			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="submit" class="btn btn-primary" onclick=SubmitForm>Submit</button>
 		</div>
 	</div>
 </EditForm>
-<Button Type="ButtonType.Button" Color="ButtonColor.Info" onclick=@(async() => await WtfChanged.InvokeAsync(!Wtf))>WTF</Button>
 
 @code
 {
@@ -72,9 +69,9 @@
     public EventCallback<Noun> ValueChanged { get; set; }
 	
 	[Parameter]
-	public bool Wtf { get; set; } = false;
+	public bool Loading { get; set; } = false;
 	[Parameter]
-	public EventCallback<bool> WtfChanged { get; set; }
+	public EventCallback<bool> LoadingChanged { get; set; }
 
     private EditContext EC = new EditContext(new Noun());
     private bool Editing => Value.Id != 0;
@@ -95,9 +92,11 @@
 		// TODO spice this up as a component that uses cancellationTokens.
 		SuccessMessage = message;
 		ShowSuccessMessage = true;
+		StateHasChanged();
 
 		await Task.Delay(seconds * 1000);
 		ShowSuccessMessage = false;
+		StateHasChanged();
 	}
 
 	private async Task SubmitForm()
@@ -106,11 +105,7 @@
 		try
 		{
 			Error = null;
-			@* Console.Write($"\nHide\n\tBefore: {Loading} ");
-			Loading = true;
-			await LoadingChanged.InvokeAsync(true);
-			Console.Write($"after: {Loading}"); *@
-			await Task.Delay(5000);
+			//await LoadingChanged.InvokeAsync(true);
 			using var context = GetContext();
 
 			if(Editing)
@@ -125,7 +120,6 @@
 				await context.SaveChangesAsync();
 				
 			}
-
 		}
 		catch(Exception ex)
 		{
@@ -134,10 +128,7 @@
 		}
 		finally
 		{
-			@* Console.Write($"\nShow\n\tBefore: {Loading} ");
-			Loading = false;
-			await LoadingChanged.InvokeAsync(false);
-			Console.Write($"after: {Loading}"); *@
+			//await LoadingChanged.InvokeAsync(false);
 
 			if(!encounteredError)
 			{
