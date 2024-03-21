@@ -5,51 +5,52 @@
 <DisplayError Error=Error />
 <DisplaySuccess @ref=Success />
 <p>Loading: @Loading</p>
-
-<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(DoAndShow))>
-	<div class="row mt-3">
-		<div class="col">
-			<label for=@GetFormId("name") class="form-label">
-				Name
-			</label>
-			<InputText @bind-Value=Value.Name id=@GetFormId("name") class="form-control" />
-			<ValidationMessage For=@(() => Value.Name) />
+<ShowLoading Loading=Loading>
+	<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(DoAndShow))>
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("name") class="form-label">
+					Name
+				</label>
+				<InputText @bind-Value=Value.Name id=@GetFormId("name") class="form-control" />
+				<ValidationMessage For=@(() => Value.Name) />
+			</div>
 		</div>
-	</div>
-	<div class="row mt-3">
-		<div class="col">
-			<label for=@GetFormId("ShortDescription") class="form-label">
-				Short Description
-			</label>
-			<InputText
-				@bind-Value=Value.ShortDescription
-				id=@GetFormId("ShortDescription")
-				class="form-control"
-				placeholder="Short description returned in search results" />
-			<ValidationMessage For=@(() => Value.ShortDescription) />
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("ShortDescription") class="form-label">
+					Short Description
+				</label>
+				<InputText
+					@bind-Value=Value.ShortDescription
+					id=@GetFormId("ShortDescription")
+					class="form-control"
+					placeholder="Short description returned in search results" />
+				<ValidationMessage For=@(() => Value.ShortDescription) />
+			</div>
 		</div>
-	</div>
-	<div class="row mt-3">
-		<div class="col">
-			<label for=@GetFormId("Details") class="form-label">
-				Details
-			</label>
-			<InputTextArea @bind-Value=Value.Details id=@GetFormId("Details") class="form-control" rows="7" />
-			<ValidationMessage For=@(() => Value.Details) />
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("Details") class="form-label">
+					Details
+				</label>
+				<InputTextArea @bind-Value=Value.Details id=@GetFormId("Details") class="form-control" rows="7" />
+				<ValidationMessage For=@(() => Value.Details) />
+			</div>
 		</div>
-	</div>
-	<div class="row mt-3">
-		<div class="col">
-			<DataAnnotationsValidator/>
-			<ValidationSummary/>
+		<div class="row mt-3">
+			<div class="col">
+				<DataAnnotationsValidator/>
+				<ValidationSummary/>
+			</div>
 		</div>
-	</div>
-	<div class="row mt-3">
-		<div class="col">
-			<button type="submit" class="btn btn-primary">Submit</button>
+		<div class="row mt-3">
+			<div class="col">
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
 		</div>
-	</div>
-</EditForm>
+	</EditForm>
+</ShowLoading>
 @code
 {
 	[CascadingParameter(Name="Value")]
