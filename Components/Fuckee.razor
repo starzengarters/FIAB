@@ -4,7 +4,7 @@
 
 <DisplayError Error=Error />
 <DisplaySuccess @ref=Success />
-<p>Loading: @Loading</p>
+@* TODO - Figure out why ShowLoading must be in this component, and not its parent.*@
 <ShowLoading Loading=Loading>
 	<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(DoAndShow))>
 		<div class="row mt-3">
