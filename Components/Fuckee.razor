@@ -84,37 +84,36 @@
 	private async Task<bool> DoWork()
 	{
 		OnLoadingChanged(true);
-		
+		var goodRun = true;
 		await Task.Run(() => {  
 			Error = null;
-			/*for(var n = 0; n < 10; n++)
+			
+			try
 			{
-				for(var x = 0; x < 10000; x++)
+				using var context = FIABContext.Create(Config);
+				if(Editing)
 				{
-					Console.Write($"\rDoing: {x}");
+					context.Attach(Value);
+					context.Update(Value);
+					context.SaveChanges();
+				}
+				else
+				{
+					context.Nouns.Add(Value);
+					context.SaveChanges();
 				}
 			}
-			Console.WriteLine("");
-			Console.WriteLine(Loading);*/
-			
-			using var context = FIABContext.Create(Config);
-			if(Editing)
+			catch(Exception ex)
 			{
-				context.Attach(Value);
-				context.Update(Value);
-				context.SaveChanges();
-			}
-			else
-			{
-				context.Nouns.Add(Value);
-				context.SaveChanges();
+				Error = ex;
+				goodRun = false;
 			}
 		 });
 
 
 		OnLoadingChanged(false);
 		//Error = new Exception("Aw, snap!");
-		return true;
+		return goodRun;
 	}
 
 	private async Task DoAndShow()
@@ -122,7 +121,8 @@
 		var goodWork = await DoWork();
 		if(goodWork)
 		{
-			Success.ShowSuccess("Do and Show");
+			var action = Editing ? "edited" : "created";
+			Success.ShowSuccess($"{DateTime.Now} Noun {Value.Id} {action}.");
 		}
 	}
 }
