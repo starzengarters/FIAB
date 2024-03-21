@@ -15,16 +15,12 @@
 		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
 	</NotAuthorized>
 	<Authorized>
-		<ShowLoading Loading=Wtf>
+		<ShowLoading Loading=Loading>
 			<h1>
 				@(Editing ? $"Editing {Item.Id}" : "Create")
 			</h1>
-			<p>External WTF: @Wtf</p>
-			<EditNoun @bind-Value=Item @bind-Wtf=Wtf />
+			<EditNoun @bind-Value=Item @bind-Loading=Loading />
 		</ShowLoading>
-		<p>
-			<Button Type="ButtonType.Button" Color="ButtonColor.Info" onclick=@(async() => await InvokeAsync(() => Wtf = !Wtf))>WTF Parent</Button>
-		</p>
 	</Authorized>
 </AuthorizeView>
 </div>
@@ -38,7 +34,7 @@
 
 	private Exception? Error;
 
-	private bool Wtf = false;
+	private bool Loading = false;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -60,7 +56,7 @@
 			}
 			finally
 			{
-				Wtf = false;
+				Loading = false;
 				StateHasChanged();
 			}
 		}
