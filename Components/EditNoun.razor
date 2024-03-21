@@ -13,7 +13,9 @@
 		<strong>Success</strong><br/>
 	</div>
 }
-
+<p>
+	Internal WTF: @Wtf
+</p>
 <EditForm EditContext="EC" OnSubmit="SubmitForm">
 	<div class="row mt-3">
 		<div class="col">
@@ -58,6 +60,7 @@
 		</div>
 	</div>
 </EditForm>
+<Button Type="ButtonType.Button" Color="ButtonColor.Info" onclick=@(async() => await WtfChanged.InvokeAsync(!Wtf))>WTF</Button>
 
 @code
 {
@@ -67,6 +70,11 @@
 
     [Parameter]
     public EventCallback<Noun> ValueChanged { get; set; }
+	
+	[Parameter]
+	public bool Wtf { get; set; } = false;
+	[Parameter]
+	public EventCallback<bool> WtfChanged { get; set; }
 
     private EditContext EC = new EditContext(new Noun());
     private bool Editing => Value.Id != 0;
@@ -74,7 +82,6 @@
 	private string FormId = System.Guid.NewGuid().ToString();
 	private string GetFormId(string name) => $"{FormId}-{name}";
 	
-	private bool Loading = true;
 	private Exception? Error;
 	private string SuccessMessage = string.Empty;
 	private bool ShowSuccessMessage = false;
@@ -99,8 +106,11 @@
 		try
 		{
 			Error = null;
+			@* Console.Write($"\nHide\n\tBefore: {Loading} ");
 			Loading = true;
-			await Task.Delay(1000);
+			await LoadingChanged.InvokeAsync(true);
+			Console.Write($"after: {Loading}"); *@
+			await Task.Delay(5000);
 			using var context = GetContext();
 
 			if(Editing)
@@ -124,7 +134,10 @@
 		}
 		finally
 		{
+			@* Console.Write($"\nShow\n\tBefore: {Loading} ");
 			Loading = false;
+			await LoadingChanged.InvokeAsync(false);
+			Console.Write($"after: {Loading}"); *@
 
 			if(!encounteredError)
 			{
