@@ -1,0 +1,10 @@
+<h1>FUCKER</h1>
+<p>Is Loading? @Loading</p>
+<Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => Loading = !Loading))>Toggle Loading</Button>
+<hr/>
+<Fuckee @bind-Loading=Loading />
+
+@code
+{
+	private bool Loading = false;
+}
