@@ -4,7 +4,9 @@
 <Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => Loading = !Loading))>Toggle Loading</Button>
 <hr/>
 <CascadingValue Name="Value" Value=@Value>
-	<Fuckee @bind-Loading=Loading />
+	<CascadingValue Name="Loading" Value=@Loading>
+		<Fuckee OnLoadingChanged=HandleLoadingChanged />
+	</CascadingValue>
 </CascadingValue>
 
 @code
@@ -16,4 +18,11 @@
     public EventCallback<Noun> ValueChanged { get; set; }
 	
 	private bool Loading = false;
+
+	private void HandleLoadingChanged(bool input)
+	{
+		Console.WriteLine("Hello from HandleLoadingChanged.");
+		Loading = input;
+		StateHasChanged();
+	}
 }
