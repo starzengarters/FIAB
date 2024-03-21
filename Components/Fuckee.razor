@@ -3,6 +3,7 @@
 
 <h2>FUCKEE</h2>
 <p>Is Loading? @Loading</p>
+<p>Value.Id: @Value.Id</p>
 <Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await LoadingChanged.InvokeAsync(!Loading))>Toggle Loading</Button>
 <br/>
 <Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(DoWork))>Do Work</Button>
@@ -15,23 +16,32 @@
 </p>
 @code
 {
+	[CascadingParameter(Name="Value")]
+	public Noun Value { get; set; } = new Noun();
+
 	[Parameter]
 	[EditorRequired]
 	public bool Loading { get; set; } = false;
 	[Parameter]
-    public EventCallback<bool> LoadingChanged { get; set; }
+	public EventCallback<bool> LoadingChanged { get; set; }
 
 	private Exception? Error;
 	private DisplaySuccess Success = new DisplaySuccess();
 
+	protected override async Task OnParametersSetAsync()
+	{
+		// Ensures we render freshly provided parameters.
+		StateHasChanged();
+
+	}
+
 	private async Task<bool> DoWork()
 	{
 		await LoadingChanged.InvokeAsync(true);
-		Error = null;
 		
 		await Task.Run(() => {  
-			
-			for(var n = 0; n < 50; n++)
+			Error = null;
+			for(var n = 0; n < 10; n++)
 			{
 				for(var x = 0; x < 10000; x++)
 				{
@@ -39,9 +49,11 @@
 				}
 			}
 			Console.WriteLine("");
+			Console.WriteLine(Loading);
 			
 			using var ctx = FIABContext.Create(Config);
 			var nouns = ctx.Nouns.Take(5).ToList();
+			
 		 });
 
 

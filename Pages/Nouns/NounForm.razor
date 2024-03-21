@@ -19,8 +19,9 @@
 			<h1>
 				@(Editing ? $"Editing {Item.Id}" : "Create")
 			</h1>
-			<EditNoun @bind-Value=Item @bind-Loading=Loading/>
-			<Fucker />
+			<p>Item.Id: @Item.Id</p>
+			@*<EditNoun @bind-Value=Item @bind-Loading=Loading/>*@
+			<Fucker @bind-Value=Item />
 		</ShowLoading>
 	</Authorized>
 </AuthorizeView>
