@@ -1,11 +1,21 @@
 
-<Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => Loading = !Loading))>Toggle Loading</Button>
+<Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => HandleLoadingChanged(!Loading)))>Toggle Loading</Button>
+<p>Loading: @Loading</p>
 <hr/>
-<CascadingValue Name="Value" Value=@Value>
-	<CascadingValue Name="Loading" Value=@Loading>
-		<Fuckee OnLoadingChanged=HandleLoadingChanged OnValueChanged=HandleValueChanged />
-	</CascadingValue>
-</CascadingValue>
+<AuthorizeView Roles=@Constants.Roles.User Context="auth">
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		@* <ShowLoading Loading=Loading> *@
+			<CascadingValue Name="Value" Value=@Value>
+				<CascadingValue Name="Loading" Value=@Loading>
+					<Fuckee OnLoadingChanged=HandleLoadingChanged OnValueChanged=HandleValueChanged />
+				</CascadingValue>
+			</CascadingValue>
+		@* </ShowLoading> *@
+	</Authorized>
+</AuthorizeView>
 
 @code
 {
