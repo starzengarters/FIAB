@@ -1,11 +1,11 @@
 <h1>FUCKER</h1>
 <p>Is Loading? @Loading</p>
-<p>Value.Id: @Value.Id</p>
+<p>Value.Id: @Value.Id @Value.Name</p>
 <Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => Loading = !Loading))>Toggle Loading</Button>
 <hr/>
 <CascadingValue Name="Value" Value=@Value>
 	<CascadingValue Name="Loading" Value=@Loading>
-		<Fuckee OnLoadingChanged=HandleLoadingChanged />
+		<Fuckee OnLoadingChanged=HandleLoadingChanged OnValueChanged=HandleValueChanged />
 	</CascadingValue>
 </CascadingValue>
 
@@ -18,6 +18,13 @@
     public EventCallback<Noun> ValueChanged { get; set; }
 	
 	private bool Loading = false;
+
+	private async Task HandleValueChanged(Noun input)
+	{
+		Console.WriteLine("Hello from HandleValueChanged.");
+		await ValueChanged.InvokeAsync(input);
+		StateHasChanged();
+	}
 
 	private void HandleLoadingChanged(bool input)
 	{

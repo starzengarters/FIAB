@@ -63,7 +63,10 @@
 	public bool Loading { get; set; } = false;
 	
 	[Parameter]
-	public Action<bool> OnLoadingChanged { get; set; }
+	public Func<Noun, Task> OnValueChanged { get; set; } = (async (n) =>  await Task.CompletedTask);
+
+	[Parameter]
+	public Action<bool> OnLoadingChanged { get; set; } = (n => throw new NotImplementedException());
 
 	private Exception? Error;
 	private DisplaySuccess Success = new DisplaySuccess();
@@ -122,6 +125,7 @@
 		if(goodWork)
 		{
 			var action = Editing ? "edited" : "created";
+			await OnValueChanged(Value);
 			Success.ShowSuccess($"{DateTime.Now} Noun {Value.Id} {action}.");
 		}
 	}
