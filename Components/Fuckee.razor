@@ -1,14 +1,9 @@
 @using FIAB.Contexts;
-@inject IConfiguration Config
-
-<h2>FUCKEE</h2>
 @using Microsoft.AspNetCore.Components.Forms
-@using FIAB.Contexts;
 @inject IConfiguration Config
 
 <DisplayError Error=Error />
 <DisplaySuccess @ref=Success />
-<p>Loading: @Loading</p>
 
 <EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(DoAndShow))>
 	<div class="row mt-3">
