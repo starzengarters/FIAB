@@ -75,22 +75,22 @@
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		await Task.CompletedTask;
-		try
+		if(firstRender)
 		{
-			if(firstRender)
+			try
 			{
 				// No need for anything here, the SearchListing will auto-load for us.
 				
 			}
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-		}
-		finally
-		{
-			Loading = false;
-			StateHasChanged();
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
 		}
 	}
 

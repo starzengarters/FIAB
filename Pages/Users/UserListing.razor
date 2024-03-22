@@ -65,23 +65,23 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		try
+		if(firstRender)
 		{
-			if(firstRender)
+			try
 			{
 				using var context = FIABContext.Create(Config);
 				// TODO - Pagination and Filtering will be needed sooner or later.
 				Listing = await _UserManager.Users.ToListAsync();
 			}
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-		}
-		finally
-		{
-			Loading = false;
-			StateHasChanged();
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
 		}
 	}
 

@@ -75,21 +75,21 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		try
+		if(firstRender)
 		{
-			if(firstRender)
+			try
 			{
 				await Task.CompletedTask;
 			}
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-		}
-		finally
-		{
-			Loading = false;
-			StateHasChanged();
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
 		}
 	}
 
