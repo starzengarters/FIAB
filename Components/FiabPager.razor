@@ -61,16 +61,10 @@ else
 
 	public List<T> FilteredList { get; private set; } = new List<T>();
 
-	private bool Initialized = false;
 
 	protected override async Task OnParametersSetAsync()
 	{
-		if(!Initialized)
-		{
-			await Filter();
-			Initialized = true;
-		}
-		await Task.CompletedTask;
+		await Filter();
 	}
 
 	private async Task OnPageChangedAsync(int newPageNumber)
@@ -82,19 +76,26 @@ else
 	private async Task Filter()
 	{
 		//Console.WriteLine($"From Pagination.Filter({DateTime.Now.TimeOfDay})");
-		var queryable = Value.AsQueryable();
 
 		// Shenanigans if Value is a detatched IQueryable.
 		// Try to attach it to a live dbContext.
 		// Thank You, https://stackoverflow.com/a/30719538 for this glorious hack.
-		using var context = FIABContext.Create(Config);
 		if(Value is IQueryable)
 		{
+			using var context = FIABContext.Create(Config);
 			var x = Value.AsQueryable();
 			var mySet = context.Set<T>().AsQueryable();
-			queryable = mySet.Provider.CreateQuery<T>(x.Expression);
+			var queryable = mySet.Provider.CreateQuery<T>(x.Expression);
+			await FilterQueryable(queryable);
 		}
+		else
+		{
+			await FilterQueryable(Value.AsQueryable());
+		}
+	}
 
+	private async Task FilterQueryable(IQueryable<T> queryable)
+	{
 		var pageSize = (int)PageSize;
 		var page = (int)Page;
 		
@@ -105,5 +106,4 @@ else
 		
 		Records = queryable.Count();
 	}
-	
 }
