@@ -12,7 +12,7 @@
 
 <Modal @ref="NounModal" Title="Add a Noun">
 	<BodyTemplate>
-		<EditNoun @bind-Value=NounToAdd />
+		<EditNoun @bind-Value=NounToAdd ShowButtons=false />
 	</BodyTemplate>
 	<FooterTemplate>
 		<Button Color="ButtonColor.Secondary" @onclick=HideModal>Close</Button>

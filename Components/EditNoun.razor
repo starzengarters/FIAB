@@ -1,6 +1,7 @@
 
 <Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => HandleLoadingChanged(!Loading)))>Toggle Loading</Button>
 <p>Loading: @Loading</p>
+<p>ShowButtons: @ShowButtons</p>
 <hr/>
 <AuthorizeView Roles=@Constants.Roles.User Context="auth">
 	<NotAuthorized>
@@ -11,7 +12,10 @@
 		@* <ShowLoading Loading=Loading> *@
 			<CascadingValue Name="Value" Value=@Value>
 				<CascadingValue Name="Loading" Value=@Loading>
-					<EditNounHelper OnLoadingChanged=HandleLoadingChanged OnValueChanged=HandleValueChanged />
+					<EditNounHelper
+						OnLoadingChanged=HandleLoadingChanged
+						OnValueChanged=HandleValueChanged
+						ShowButtons=ShowButtons  />
 				</CascadingValue>
 			</CascadingValue>
 		@* </ShowLoading> *@
@@ -25,6 +29,9 @@
     public Noun Value { get; set; } = new Noun();
     [Parameter]
     public EventCallback<Noun> ValueChanged { get; set; }
+
+	[Parameter]
+	public bool ShowButtons { get; set; } = true;
 	
 	private bool Loading = false;
 

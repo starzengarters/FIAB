@@ -44,11 +44,14 @@
 				<ValidationSummary/>
 			</div>
 		</div>
-		<div class="row mt-3">
-			<div class="col">
-				<button type="submit" class="btn btn-primary">Submit</button>
+		@if(ShowButtons)
+		{
+			<div class="row mt-3">
+				<div class="col">
+					<button type="submit" class="btn btn-primary">Submit</button>
+				</div>
 			</div>
-		</div>
+		}
 	</EditForm>
 </ShowLoading>
 @code
@@ -64,6 +67,9 @@
 
 	[Parameter]
 	public Action<bool> OnLoadingChanged { get; set; } = (n => throw new NotImplementedException());
+
+	[Parameter]
+	public bool ShowButtons { get; set; } = true;
 
 	private Exception? Error;
 	private DisplaySuccess Success = new DisplaySuccess();
