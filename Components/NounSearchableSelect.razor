@@ -5,8 +5,21 @@
 
 <SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=Cap.ChildContent />
 <CaptureRenderFragment @ref=Cap>
-	<p>This RF has Stockholm Syndrome.</p>
+	<p>
+		<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Noun</Button>
+	</p>
 </CaptureRenderFragment>
+
+<Modal @ref="NounModal" Title="Add a Noun">
+	<BodyTemplate>
+		<EditNoun @bind-Value=NounToAdd />
+	</BodyTemplate>
+	<FooterTemplate>
+		<Button Color="ButtonColor.Secondary" @onclick=HideModal>Close</Button>
+		<Button Color="ButtonColor.Primary">Save changes</Button>
+	</FooterTemplate>
+</Modal>
+
 @code
 {
 	[Parameter]
@@ -24,6 +37,8 @@
 	public string? Placeholder { get; set; } = "Nouns starting with...";
 
 	private CaptureRenderFragment Cap = new CaptureRenderFragment();
+	private Noun NounToAdd = new Noun();
+	private Modal NounModal = new Modal();
 
 	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
 	{
@@ -33,5 +48,16 @@
 		.Take(8)
 		.ToListAsync();
 		return results;
+	}
+
+	private async Task ShowModal()
+	{
+		NounToAdd = new Noun();
+		await NounModal.ShowAsync();
+	}
+	
+	private async Task HideModal()
+	{
+		await NounModal.HideAsync();
 	}
 }
