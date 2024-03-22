@@ -41,11 +41,7 @@
 						</label>
 						@* TODO - Do recursion and indentation for parent child relationships. *@
 						@* TODO - Provision for adding a new Object here, inline. *@
-						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object")>
-							<AddOptionFragment>
-								<p>TODO: In-line adding an option.</p>
-							</AddOptionFragment>
-						</NounSearchableSelect>
+						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object") />
 					</div>
 				</div>
 				<div class="row">

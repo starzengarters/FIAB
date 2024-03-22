@@ -3,8 +3,10 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=AddOptionFragment />
-
+<SearchableSelect T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=Cap.ChildContent />
+<CaptureRenderFragment @ref=Cap>
+	<p>This RF has Stockholm Syndrome.</p>
+</CaptureRenderFragment>
 @code
 {
 	[Parameter]
@@ -21,8 +23,7 @@
 	[Parameter]
 	public string? Placeholder { get; set; } = "Nouns starting with...";
 
-	[Parameter]
-	public RenderFragment AddOptionFragment { get; set; } = default!;
+	private CaptureRenderFragment Cap = new CaptureRenderFragment();
 
 	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
 	{
