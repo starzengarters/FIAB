@@ -11,14 +11,14 @@
 <DisplayError Error=Error />
 
 
-@* <ShowLoading Loading=Loading> *@
+<ShowLoading Loading=Loading>
 	<h1>
 		@(Editing ? $"Editing {Item.Id}" : "Create")
 	</h1>
 	<p>Item.Id: @Item.Id</p>
 	@*<EditNoun @bind-Value=Item @bind-Loading=Loading/>*@
 	<Fucker @bind-Value=Item />
-@* </ShowLoading> *@
+</ShowLoading>
 
 <div class="row"><div class="col">Loading: @Loading</div></div>
 </div>
@@ -32,7 +32,7 @@
 
 	private Exception? Error;
 
-	private bool Loading = false;
+	private bool Loading = true;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{

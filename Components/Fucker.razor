@@ -7,6 +7,7 @@
 		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
 	</NotAuthorized>
 	<Authorized>
+		@* TODO - Figure out why this particular ShowLoading breaks the ShowSuccess in the component we're invoking here. *@
 		@* <ShowLoading Loading=Loading> *@
 			<CascadingValue Name="Value" Value=@Value>
 				<CascadingValue Name="Loading" Value=@Loading>
