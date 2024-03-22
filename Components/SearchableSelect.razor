@@ -131,7 +131,7 @@
 	[Parameter]
 	public RenderFragment? AddOptionFragment { get; set; }
 
-	private string SearchTerm { get; set; } = string.Empty;
+	public string SearchTerm { get; private set; } = string.Empty;
 	private CancelableSearch _CancelableSearch = new CancelableSearch();
 
 	private IEnumerable<T> Options = new List<T>();
