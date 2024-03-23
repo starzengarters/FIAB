@@ -1,9 +1,29 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.EntityFrameworkCore
+@namespace FIAB.Components
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id="Id" Placeholder="Placeholder" />
+<SearchableSelect @ref=Search T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id="Id" Placeholder="Placeholder" AddOptionFragment=Cap.ChildContent />
+<CaptureRenderFragment @ref=Cap>
+	<p>
+		<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Relationship Type</Button>
+	</p>
+</CaptureRenderFragment>
+
+<Modal @ref="RtModal" Title="Add a Relationship Type">
+	<BodyTemplate>
+		<EditRelationshipType
+			@ref=EditRtRef
+			@bind-Value=RtToAdd
+			OnSuccessfulSubmit=AfterSave
+			ShowButtons=false />
+	</BodyTemplate>
+	<FooterTemplate>
+		<Button Color="ButtonColor.Secondary" Disabled=@(EditRtRef?.Loading ?? false) @onclick=HideModal>Close</Button>
+		<Button Color="ButtonColor.Primary"  Disabled=@(EditRtRef?.Loading ?? false) @onclick=SaveModal>Submit</Button>
+	</FooterTemplate>
+</Modal>
 
 @code
 {
@@ -21,6 +41,12 @@
 	[Parameter]
 	public string? Placeholder { get; set; } = "Relationship Type...";
 
+	private CaptureRenderFragment Cap = new CaptureRenderFragment();
+	private SearchableSelect<RelationshipType> Search = new SearchableSelect<RelationshipType>();
+	private EditRelationshipType? EditRtRef;
+	private RelationshipType RtToAdd = new RelationshipType();
+	private Modal RtModal = new Modal();
+
 	private async Task<IEnumerable<RelationshipType>> SearchRTs(string searchTerm)
 	{
 		using var db = Contexts.FIABContext.Create(Config);
@@ -29,5 +55,32 @@
 		.Take(8)
 		.ToListAsync();
 		return results;
+	}
+
+	private async Task ShowModal()
+	{
+		RtToAdd = new RelationshipType { Name = Search.SearchTerm };
+		await RtModal.ShowAsync();
+	}
+	
+	private async Task HideModal()
+	{
+		await RtModal.HideAsync();
+	}
+
+	private async Task AfterSave()
+	{
+		await ValueChanged.InvokeAsync(RtToAdd);
+		await RtModal.HideAsync();
+	}
+
+	private async Task SaveModal()
+	{
+		await (EditRtRef?.Submit() ?? Task.CompletedTask);
+		await InvokeAsync(StateHasChanged);
+		// We could invoke AfterSave() here explicitly,
+		// But it's hooked-up as the OnSuccessfulSubmit
+		// parameter.  So it closes anytime there's a
+		// good submission
 	}
 }
