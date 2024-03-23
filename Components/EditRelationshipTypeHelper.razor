@@ -1,5 +1,6 @@
 @using FIAB.Contexts;
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore;
 @inject IConfiguration Config
 
 <DisplayError Error=Error />
@@ -27,6 +28,15 @@
 					class="form-control"
 					placeholder="Short description returned in search results" />
 				<ValidationMessage For=@(() => Value.ShortDescription) />
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("Parent") class="form-label">
+					Parent Relationship Type
+				</label>
+				<RelationshipTypeSearchableSelect @bind-Value=Value.Parent Id=@GetFormId("Parent") />
+				<ValidationMessage For=@(() => Value.Parent) />
 			</div>
 		</div>
 		<div class="row mt-3">
@@ -91,7 +101,7 @@
 	{
 		OnLoadingChanged(true);
 		var goodRun = true;
-		await Task.Run(() => {  
+		await Task.Run(async () => {  
 			Error = null;
 			
 			try
@@ -105,6 +115,9 @@
 				}
 				else
 				{
+					// Ensure we're using a valid, existing entity.
+					if(Value.Parent != null)
+						Value.Parent = await context.RelationshipTypes.SingleAsync(n => n.Id == Value.Parent.Id);
 					context.RelationshipTypes.Add(Value);
 					context.SaveChanges();
 				}
