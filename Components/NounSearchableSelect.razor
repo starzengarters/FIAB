@@ -3,12 +3,13 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect @ref=Search T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=Cap.ChildContent />
-<CaptureRenderFragment @ref=Cap>
-	<p>
-		<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Noun</Button>
-	</p>
-</CaptureRenderFragment>
+<SearchableSelect @ref=Search T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder">
+	<AddOptionFragment>
+		<p>
+			<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Noun</Button>
+		</p>
+	</AddOptionFragment>
+</SearchableSelect>
 
 <Modal @ref="NounModal" Title="Add a Noun">
 	<BodyTemplate>
@@ -40,7 +41,6 @@
 	[Parameter]
 	public string? Placeholder { get; set; } = "Nouns starting with...";
 
-	private CaptureRenderFragment Cap = new CaptureRenderFragment();
 	private SearchableSelect<Noun> Search = new SearchableSelect<Noun>();
 	private EditNoun? EditNounRef;
 	private Noun NounToAdd = new Noun();
