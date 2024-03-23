@@ -16,6 +16,7 @@
 						@ref=Helper
 						OnLoadingChanged=HandleLoadingChanged
 						OnValueChanged=HandleValueChanged
+						OnSuccessfulSubmit=OnSuccessfulSubmit
 						ShowButtons=ShowButtons  />
 				</CascadingValue>
 			</CascadingValue>
@@ -30,6 +31,9 @@
     public Noun Value { get; set; } = new Noun();
     [Parameter]
     public EventCallback<Noun> ValueChanged { get; set; }
+
+	[Parameter]
+	public Func<Task> OnSuccessfulSubmit { get; set; } = (async () => await Task.CompletedTask);
 
 	[Parameter]
 	public bool ShowButtons { get; set; } = true;

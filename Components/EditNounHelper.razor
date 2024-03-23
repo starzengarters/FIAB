@@ -64,6 +64,9 @@
 
 	[Parameter]
 	public Action<bool> OnLoadingChanged { get; set; } = (n => throw new NotImplementedException());
+	
+	[Parameter]
+	public Func<Task> OnSuccessfulSubmit { get; set; } = (async () => await Task.CompletedTask);
 
 	[Parameter]
 	public bool ShowButtons { get; set; } = true;
@@ -127,6 +130,7 @@
 			var action = Editing ? "edited" : "created";
 			await OnValueChanged(Value);
 			await Success.ShowSuccess($"{DateTime.Now} Noun {Value.Id} {action}.");
+			await OnSuccessfulSubmit();
 		}
 	}
 }

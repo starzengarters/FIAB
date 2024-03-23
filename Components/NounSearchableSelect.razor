@@ -12,7 +12,11 @@
 
 <Modal @ref="NounModal" Title="Add a Noun">
 	<BodyTemplate>
-		<EditNoun @ref=EditNounRef @bind-Value=NounToAdd ShowButtons=false />
+		<EditNoun
+			@ref=EditNounRef
+			@bind-Value=NounToAdd
+			OnSuccessfulSubmit=AfterSave
+			ShowButtons=false />
 	</BodyTemplate>
 	<FooterTemplate>
 		<Button Color="ButtonColor.Secondary" Disabled=@(EditNounRef?.Loading ?? false) @onclick=HideModal>Close</Button>
@@ -63,14 +67,19 @@
 		await NounModal.HideAsync();
 	}
 
+	private async Task AfterSave()
+	{
+		await ValueChanged.InvokeAsync(NounToAdd);
+		await NounModal.HideAsync();
+	}
+
 	private async Task SaveModal()
 	{
 		await (EditNounRef?.Submit() ?? Task.CompletedTask);
 		await InvokeAsync(StateHasChanged);
-		if(EditNounRef?.Error == null)
-		{
-			await ValueChanged.InvokeAsync(NounToAdd);
-			await NounModal.HideAsync();
-		}
+		// We could invoke AfterSave() here explicitly,
+		// But it's hooked-up as the OnSuccessfulSubmit
+		// parameter.  So it closes anytime there's a
+		// good submission
 	}
 }
