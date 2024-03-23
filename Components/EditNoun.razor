@@ -1,8 +1,4 @@
 
-<Button Color="ButtonColor.Primary" Type="ButtonType.Button" onclick=@(async() => await InvokeAsync(() => HandleLoadingChanged(!Loading)))>Toggle Loading</Button>
-<p>Loading: @Loading</p>
-<p>ShowButtons: @ShowButtons</p>
-<hr/>
 <AuthorizeView Roles=@Constants.Roles.User Context="auth">
 	<NotAuthorized>
 		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
