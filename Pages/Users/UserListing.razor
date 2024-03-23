@@ -1,0 +1,92 @@
+@page "/Users"
+@using FIAB.Contexts
+@using Microsoft.EntityFrameworkCore
+@using System.Linq
+@using Microsoft.AspNetCore.Identity
+@inject IConfiguration Config
+@inject UserManager<IdentityUser> _UserManager
+
+
+<div class="container">
+
+<DisplayError Error=Error />
+
+<AuthorizeView Roles=@Constants.Roles.Admin>
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredAdmin</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<div class="row">
+				<div class="col-8 ps-0">
+					<h1 class="text-start">Users</h1>
+				</div>
+				<div class="col-md-4 text-end">
+					@* Maybe later.
+					<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Users/Create"> Add a new User</Button>
+					*@
+				</div>
+			</div>
+			<div class="row">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th scope="col" class="col-8">Name</th>
+							<th scope="col" class="col-4">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+					@foreach(var user in Listing)
+					{
+						<tr>
+							<td>
+								@user.Email<br/>
+							</td>
+							<td class="text-end">
+								<Button Type="ButtonType.Link" To=@($"/Users/{user.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+								<Button Type="ButtonType.Link" To=@($"/Users/{user.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+							</td>
+						</tr>
+					}
+					</tbody>
+				</table>
+			</div>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
+</div>
+
+@code
+{
+	private bool Loading = true;
+	private Exception? Error;
+
+	private List<IdentityUser> Listing = new List<IdentityUser>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				using var context = FIABContext.Create(Config);
+				// TODO - Pagination and Filtering will be needed sooner or later.
+				Listing = await _UserManager.Users.ToListAsync();
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+}

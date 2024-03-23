@@ -1,0 +1,57 @@
+
+<AuthorizeView Roles=@Constants.Roles.User Context="auth">
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		@* TODO - Figure out why this particular ShowLoading breaks the ShowSuccess in the component we're invoking here. *@
+		@* <ShowLoading Loading=Loading> *@
+			<CascadingValue Name="Value" Value=@Value>
+				<CascadingValue Name="Loading" Value=@Loading>
+					<EditRelationshipTypeHelper
+						@ref=Helper
+						OnLoadingChanged=HandleLoadingChanged
+						OnValueChanged=HandleValueChanged
+						OnSuccessfulSubmit=OnSuccessfulSubmit
+						ShowButtons=ShowButtons  />
+				</CascadingValue>
+			</CascadingValue>
+		@* </ShowLoading> *@
+	</Authorized>
+</AuthorizeView>
+
+@code
+{
+	[Parameter]
+    [EditorRequired]
+    public RelationshipType Value { get; set; } = new RelationshipType();
+    [Parameter]
+    public EventCallback<RelationshipType> ValueChanged { get; set; }
+
+	[Parameter]
+	public Func<Task> OnSuccessfulSubmit { get; set; } = (async () => await Task.CompletedTask);
+
+	[Parameter]
+	public bool ShowButtons { get; set; } = true;
+	
+	public bool Loading { get; private set; } = false;
+
+	private EditRelationshipTypeHelper? Helper;
+	public Exception? Error => Helper?.Error;
+
+	private async Task HandleValueChanged(RelationshipType input)
+	{
+		Console.WriteLine("Hello from HandleValueChanged.");
+		await ValueChanged.InvokeAsync(input);
+		StateHasChanged();
+	}
+
+	private void HandleLoadingChanged(bool input)
+	{
+		Console.WriteLine("Hello from HandleLoadingChanged.");
+		Loading = input;
+		StateHasChanged();
+	}
+
+	public async Task Submit() => await (Helper?.Submit() ?? Task.CompletedTask);
+}

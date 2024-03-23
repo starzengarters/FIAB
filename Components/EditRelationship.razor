@@ -1,0 +1,280 @@
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms;
+@using Microsoft.EntityFrameworkCore;
+@implements IDisposable;
+@inject IConfiguration Config;
+
+<div class="col">
+	<div class="card">
+		<h5 class="card-header">@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span></h5>
+		@if(FormRelationship != null)
+		{
+		<EditForm EditContext="EC" OnSubmit="SubmitForm">
+		<div class="card-body">	
+			<div class="container-fluid">
+				<DisplayError Error=Error />
+				@if(ShowSuccessMessage)
+				{
+					<div class="row">
+						<div class="col">
+							<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+						</div>
+						<strong>Success</strong><br/>
+					</div>
+				}
+				<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col">
+						<label for=@GetFormId("RelationshipType") class="form-label">
+							Relationship Type
+						</label>
+						@* TODO - Do recursion and indentation for parent child relationships. *@
+						@* TODO - Provision for adding a new RelationshipType here, inline. *@
+						<RelationshipTypeSearchableSelect @bind-Value=FormRelationship.RelationshipType Id=@GetFormId("RelationshipType") />
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<label for=@GetFormId("Object") class="form-label">
+							Object
+						</label>
+						@* TODO - Do recursion and indentation for parent child relationships. *@
+						@* TODO - Provision for adding a new Object here, inline. *@
+						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object") />
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						@if(FormRelationship.Started != null)
+						{
+							<label for=@GetFormId("Started") class="form-label">
+								Started
+							</label>
+							<DateInput id=@GetFormId("Started") TValue="DateOnly?" @bind-Value="@FormRelationship.Started" Placeholder="(optional)" />
+							<Switch @bind-Value="FormRelationship.StartedIsApproximate" Label="Start Date is approximate" />
+						}
+						else
+						{
+							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=InitStartDate>Add Start Date</Button>
+						}
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						@if(FormRelationship.Ended != null)
+						{
+							<label for=@GetFormId("Ended") class="form-label">
+								Ended
+							</label>
+							<DateInput id=@GetFormId("Ended") TValue="DateOnly?" @bind-Value="@FormRelationship.Ended" Placeholder="(optional)" />
+							<Switch @bind-Value="FormRelationship.EndedIsApproximate" Label="End Date is approximate" />
+						}
+						else
+						{
+							<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=InitEndDate>Add End Date</Button>
+						}
+					</div>
+				</div>
+				
+				</ShowLoading>
+			</div>
+		</div>
+		<div class="card-footer d-grid gap-2 d-md-flex justify-content-md-end">
+			@if(FormIsDirty)
+			{
+				<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=ResetForm>Reset</Button>@*Make a ComfirmReset component.*@
+			}
+			<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+
+			<Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Size="Size.Small" Outline="true" class="card-link">Submit</Button>
+		</div>
+		</EditForm>
+		}
+	</div>
+</div>
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public Relationship Relationship { get; set; } = default!;
+
+	[Parameter]
+	[EditorRequired]
+	public Action OnCancel { get; set; } = default!;
+
+	[Parameter]
+	public IEnumerable<RelationshipType> RelationshipTypes { get; set; } = new List<RelationshipType>();
+	
+	[Parameter]
+	public IEnumerable<Noun> Objects { get; set;} = new List<Noun>();
+	
+	private bool Loading = true;
+	private Relationship? FormRelationship = null!;
+	private bool FormIsDirty = false;
+	private Exception? Error;
+
+	private bool Editing => Relationship.Id > 0;
+	private string SuccessMessage = string.Empty;
+	private bool ShowSuccessMessage = false;
+
+	private EditContext EC = new EditContext(new Relationship());
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await Task.CompletedTask;
+		if(firstRender)
+		{
+			try
+			{
+				// Set FormIsDirty on any change.
+				EC.OnFieldChanged += (sender, args) => {
+					//Console.WriteLine($"Field changed. ({args.FieldIdentifier.FieldName})");
+					
+					// there is a bug where Blazor Bootstrap date inputs instantly make the form dirty.
+					// Only become dirty for those entries if the value has truly changed.
+					if(args.FieldIdentifier.FieldName == nameof(FormRelationship.Started))
+					{
+						if(Relationship.Started != FormRelationship?.Started)
+						{
+							FormIsDirty = true;
+						}
+					}
+					else if(args.FieldIdentifier.FieldName == nameof(FormRelationship.Ended))
+					{
+						if(Relationship.Ended != FormRelationship?.Ended)
+						{
+							FormIsDirty = true;
+						}
+					}
+					else
+					{
+						FormIsDirty = true;
+					}
+					
+					StateHasChanged();
+				};
+
+				// Copy the parameter relationship into a "working" copy to edit.
+				// We can work with it, reset it to the original value,
+				// and set the paremeter value to it upon a successful edit.
+				ResetForm();
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				FormIsDirty = false;// This bit gets flipped unexpectedly.
+				StateHasChanged();
+			}
+		}
+	}
+
+	public void Dispose()
+	{
+	}
+
+	private void ResetForm()
+	{
+		// Might need to initialize FormRelationship here.
+		FormRelationship = new Relationship { Subject = null!, RelationshipType = null!, Object = null! };
+		Relationship.DeepCopy(FormRelationship!);
+
+		FormIsDirty = false;
+		Error = null;
+
+		StateHasChanged();
+	}
+
+	private void InitStartDate()
+	{
+		if(FormRelationship != null)
+		{
+			FormRelationship.Started = new DateOnly();
+		}
+	}
+
+	private void InitEndDate()
+	{
+		if(FormRelationship != null)
+		{
+			FormRelationship.Ended = new DateOnly();
+		}
+	}
+
+	private async Task CancelClicked()
+	{
+		OnCancel.Invoke();
+		await Task.CompletedTask;
+	}
+
+	private async Task ShowSuccess(string message, int seconds = 5)
+	{
+		// TODO spice this up as a component that uses cancellationTokens.
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+
+		await Task.Delay(seconds * 1000);
+		ShowSuccessMessage = false;
+	}
+
+	private async Task SubmitForm()
+	{
+		var encounteredError = false;
+		try
+		{
+			Error = null;
+			Loading = true;
+			using var context = FIABContext.Create(Config);
+
+			if(FormRelationship != null)
+			{
+				if(Editing)
+				{
+					context.Attach(FormRelationship);
+					context.Update(FormRelationship);
+					await context.SaveChangesAsync();
+				}
+				else
+				{
+					// It keeps trying to add the Subject and Object as new entities.
+					// I guess take the time to get the official versions from the DB?
+					if(FormRelationship.Subject != null)
+						FormRelationship.Subject = await context.Nouns.SingleAsync(n => n.Id == FormRelationship.Subject.Id);
+					if(FormRelationship.RelationshipType != null)
+						FormRelationship.RelationshipType = await context.RelationshipTypes.SingleAsync(n => n.Id == FormRelationship.RelationshipType.Id);
+					if(FormRelationship.Object != null)
+						FormRelationship.Object = await context.Nouns.SingleAsync(n => n.Id == FormRelationship.Object.Id);
+
+					await context.Relationships.AddAsync(FormRelationship);
+					await context.SaveChangesAsync();
+				}
+
+				// Now that FormRelationship is saved, update the Relationship that was passed-in.
+				FormRelationship.DeepCopy(Relationship);
+			}
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			encounteredError = true;
+		}
+		finally
+		{
+			Loading = false;
+
+			if(!encounteredError)
+			{
+				OnCancel.Invoke();// Close and render updated data.
+			}
+			
+			StateHasChanged();
+		}
+	}
+}

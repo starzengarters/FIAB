@@ -1,0 +1,136 @@
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms
+@inject IConfiguration Config
+
+<DisplayError Error=Error />
+<DisplaySuccess @ref=Success />
+@* TODO - Figure out why ShowLoading must be in this component, and not its parent.*@
+<ShowLoading Loading=Loading>
+	<EditForm Model=Value OnValidSubmit=Submit>
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("name") class="form-label">
+					Name
+				</label>
+				<InputText @bind-Value=Value.Name id=@GetFormId("name") class="form-control" />
+				<ValidationMessage For=@(() => Value.Name) />
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("ShortDescription") class="form-label">
+					Short Description
+				</label>
+				<InputText
+					@bind-Value=Value.ShortDescription
+					id=@GetFormId("ShortDescription")
+					class="form-control"
+					placeholder="Short description returned in search results" />
+				<ValidationMessage For=@(() => Value.ShortDescription) />
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<label for=@GetFormId("Details") class="form-label">
+					Details
+				</label>
+				<InputTextArea @bind-Value=Value.Details id=@GetFormId("Details") class="form-control" rows="7" />
+				<ValidationMessage For=@(() => Value.Details) />
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<DataAnnotationsValidator/>
+				<ValidationSummary/>
+			</div>
+		</div>
+		<div class="row mt-3 @(!ShowButtons ? "d-none" : string.Empty)">
+			<div class="col">
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
+		</div>
+	</EditForm>
+</ShowLoading>
+@code
+{
+	[CascadingParameter(Name="Value")]
+	public Noun Value { get; set; } = new Noun();
+
+	[CascadingParameter(Name="Loading")]
+	public bool Loading { get; set; } = false;
+	
+	[Parameter]
+	public Func<Noun, Task> OnValueChanged { get; set; } = (async (n) =>  await Task.CompletedTask);
+
+	[Parameter]
+	public Action<bool> OnLoadingChanged { get; set; } = (n => throw new NotImplementedException());
+	
+	[Parameter]
+	public Func<Task> OnSuccessfulSubmit { get; set; } = (async () => await Task.CompletedTask);
+
+	[Parameter]
+	public bool ShowButtons { get; set; } = true;
+
+	public Exception? Error { get; set; }
+	private DisplaySuccess Success = new DisplaySuccess();
+
+	private EditContext EC = new EditContext(new Noun());
+	private bool Editing => Value.Id != 0;
+
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
+
+	protected override async Task OnParametersSetAsync()
+	{
+		// Ensures we render freshly provided parameters.
+		StateHasChanged();
+		await Task.CompletedTask;
+	}
+
+	private async Task<bool> DoWork()
+	{
+		OnLoadingChanged(true);
+		var goodRun = true;
+		await Task.Run(() => {  
+			Error = null;
+			
+			try
+			{
+				using var context = FIABContext.Create(Config);
+				if(Editing)
+				{
+					context.Attach(Value);
+					context.Update(Value);
+					context.SaveChanges();
+				}
+				else
+				{
+					context.Nouns.Add(Value);
+					context.SaveChanges();
+				}
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+				goodRun = false;
+			}
+		 });
+
+
+		OnLoadingChanged(false);
+		//Error = new Exception("Aw, snap!");
+		return goodRun;
+	}
+
+	public async Task Submit()
+	{
+		var goodWork = await DoWork();
+		if(goodWork)
+		{
+			var action = Editing ? "edited" : "created";
+			await OnValueChanged(Value);
+			await Success.ShowSuccess($"{DateTime.Now} Noun {Value.Id} {action}.");
+			await OnSuccessfulSubmit();
+		}
+	}
+}

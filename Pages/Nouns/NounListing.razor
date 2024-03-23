@@ -1,0 +1,125 @@
+@page "/Nouns"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+
+<DisplayError Error=Error />
+
+<AuthorizeView Roles=@Constants.Roles.User>
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<div class="row">
+				<div class="col-8 ps-0">
+					<h1 class="text-start">Nouns</h1>
+				</div>
+				<div class="col-md-4 text-end">
+					<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Nouns/Create"> Add a new Noun </Button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<SearchListing @ref=Search @bind-Value=Listing Search=FilterListing Placeholder="Search Nouns..." />
+				</div>
+			</div>
+			<div class="row">
+				<ShowLoading Loading=_Searching Text="Filtering...">
+				<FiabPager @ref=Paging @bind-Value=Listing>
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th scope="col" class="col-8">Name</th>
+								<th scope="col" class="col-4">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+						@foreach(var noun in Paging.FilteredList)
+						{
+							<tr>
+								<td>
+									@noun.Name<br/>
+									<span style="font-size: smaller;">@noun.ShortDescription</span>
+								</td>
+								<td class="text-end">
+									<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+									<Button Type="ButtonType.Link" To=@($"/Nouns/{noun.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+								</td>
+							</tr>
+						}
+						</tbody>
+					</table>
+				</FiabPager>
+				</ShowLoading>
+			</div>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
+</div>
+
+@code
+{
+	private bool Loading = true;
+	private Exception? Error;
+	private SearchListing<Noun> Search = new SearchListing<Noun>();
+	private bool _Searching => Search?.Searching ?? false;
+	private FiabPager<Noun> Paging = new FiabPager<Noun>();
+	private IEnumerable<Noun> Listing = new List<Noun>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		await Task.CompletedTask;
+		if(firstRender)
+		{
+			try
+			{
+				// No need for anything here, the SearchListing will auto-load for us.
+				
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task<IEnumerable<Noun>> FilterListing(string filterTerm)
+	{
+		await Task.CompletedTask;
+		try
+		{
+			using var context = FIABContext.Create(Config);
+			var query = context.Nouns.Where(n => true);
+
+			if(!string.IsNullOrWhiteSpace(filterTerm))
+			{
+				query = query.Where(n =>
+					n.Name.ToLower().Contains(filterTerm.ToLower())
+					|| (n.ShortDescription != null && n.ShortDescription.ToLower().Contains(filterTerm.ToLower())));
+			}
+
+			return query;
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			return new List<Noun>();
+		}
+	}
+}

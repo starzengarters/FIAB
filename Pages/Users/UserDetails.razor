@@ -1,0 +1,157 @@
+@page "/Users/{IdString}"
+@using FIAB.Contexts
+@using Microsoft.EntityFrameworkCore
+@using System.Linq
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> _UserManager
+@inject IConfiguration Config
+
+<div class="container">
+	<DisplayError Error=Error />
+	
+	<AuthorizeView Roles=@Constants.Roles.Admin>
+		<NotAuthorized>
+			<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredAdmin</Alert>
+		</NotAuthorized>
+		<Authorized>
+			<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col">
+						<h1>@(Item == null ? $"User {IdString}" : Item.UserName)</h1>
+					</div>
+					<div class="col text-end pt-2">
+						<Button Type="ButtonType.Link" To=@($"/Users/{IdString}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Email:</strong></div>
+					<div class="col">
+						@Item?.Email
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Email Confirmed:</strong></div>
+					<div class="col">
+						@Item?.EmailConfirmed
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Phone:</strong></div>
+					<div class="col">
+						@Item?.PhoneNumber
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Phone Confirmed:</strong></div>
+					<div class="col">
+						@Item?.PhoneNumberConfirmed
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Locked Out:</strong></div>
+					<div class="col">
+						@Item?.LockoutEnabled
+					</div>
+				</div>
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Lockout Ends:</strong></div>
+					<div class="col">
+						@Item?.LockoutEnd
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col">
+						<h2>Roles</h2>
+					</div>
+				</div>
+
+				@if(CurrentUserRoles.Count == 0)
+				{
+					<div class="row mt-2">
+						<div class="col">
+							<em>No roles currently assigned to @Item?.UserName</em>
+						</div>
+					</div>
+				}
+				@foreach(var role in CurrentUserRoles)
+				{
+					<div class="row mt-2">
+						<div class="col">@role</div>
+					</div>
+				}
+			</ShowLoading>
+		</Authorized>
+	</AuthorizeView>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+
+	private bool Loading = true;
+	private Exception? Error;
+	private IdentityUser? Item;
+	private List<string> CurrentUserRoles = new List<string>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				await SetUserDetails();
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private async Task SetUserDetails()
+	{
+		Item = await _UserManager.FindByIdAsync(IdString);
+		if(Item == null)
+		{
+			throw new Exception($"Could not find a user entry for id {IdString}");
+		}
+		CurrentUserRoles = (await _UserManager.GetRolesAsync(Item)).ToList();
+	}
+
+	private async Task ToggleRoleForUser(string role)
+	{
+		Loading = true;
+
+		try
+		{
+			var userInRole = await _UserManager.IsInRoleAsync(Item!, role);
+
+			if(userInRole)
+			{
+				await _UserManager.RemoveFromRoleAsync(Item!, role);
+			}
+			else
+			{
+				await _UserManager.AddToRoleAsync(Item!, role);
+			}
+
+			await SetUserDetails();
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+}

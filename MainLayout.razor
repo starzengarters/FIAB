@@ -1,0 +1,88 @@
+﻿@inherits LayoutComponentBase
+
+<div class="bb-page">
+
+    <Sidebar @ref="Sidebar"
+             IconName="IconName.MoonStarsFill"
+             Title="FIAB"
+             DataProvider="SidebarDataProvider" />
+
+    <main>
+        <div class="bb-top-row px-4 d-flex justify-content-end">
+            <!--
+                Login/profiles/preferences stuff will go here someday.
+            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            -->
+            <LoginDisplay />
+        </div>
+
+        <article class="content px-4">
+            <div class="py-2">
+                @Body
+            </div>
+        </article>
+    </main>
+
+</div>
+
+<Modal IsServiceModal="true" />
+<Preload />
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+    private AuthenticationState? AuthState;
+
+    private Sidebar Sidebar = default!;
+    private List<NavItem> NavItems = default!;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState = await AuthStateTask;
+    }
+
+    private async Task<SidebarDataProviderResult> SidebarDataProvider(SidebarDataProviderRequest request)
+    {
+        if (NavItems is null)
+            NavItems = GetNavItems();
+
+        return await Task.FromResult(request.ApplyTo(NavItems));
+    }
+
+    private List<NavItem> GetNavItems()
+    {
+        NavItems = new List<NavItem>
+        {
+            new NavItem { Id = "1", Href = "/", IconName = IconName.HouseDoorFill, Text = "Home", Match=NavLinkMatch.All},
+        };
+
+        
+        if(AuthState != null)
+        {
+            // Determine the user's roles.
+            var userClaim = AuthState!.User.Claims.SingleOrDefault(c =>
+                c.Type == System.Security.Claims.ClaimTypes.Role
+                && c.Value == Constants.Roles.User);
+            
+            var adminClaim = AuthState!.User.Claims.SingleOrDefault(c =>
+                c.Type == System.Security.Claims.ClaimTypes.Role
+                && c.Value == Constants.Roles.Admin);
+            
+            // If they are a user show additional links.
+            if(userClaim != null)
+            {
+                NavItems.Add(new NavItem { Id = "2", Href = "/Nouns", IconName = IconName.PlusSquareFill, Text = "Nouns"});
+                NavItems.Add(new NavItem { Id = "3", Href = "/RelationshipTypes", IconName = IconName.ArrowBarRight, Text = "Relationship Types"});
+            }
+
+            // If they are an admin show the users menu.
+            if(adminClaim != null)
+            {
+                NavItems.Add(new NavItem { Id = "4", Href = "/Users", IconName = IconName.Person, Text = "Users"});
+            }
+        }
+
+        return NavItems;
+    }
+}

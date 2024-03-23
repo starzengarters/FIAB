@@ -1,0 +1,85 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@inject IConfiguration Config
+@inject IJSRuntime JS
+
+<SearchableSelect @ref=Search T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id="Id" Placeholder="Placeholder" AddOptionFragment=Cap.ChildContent />
+<CaptureRenderFragment @ref=Cap>
+	<p>
+		<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Noun</Button>
+	</p>
+</CaptureRenderFragment>
+
+<Modal @ref="NounModal" Title="Add a Noun">
+	<BodyTemplate>
+		<EditNoun
+			@ref=EditNounRef
+			@bind-Value=NounToAdd
+			OnSuccessfulSubmit=AfterSave
+			ShowButtons=false />
+	</BodyTemplate>
+	<FooterTemplate>
+		<Button Color="ButtonColor.Secondary" Disabled=@(EditNounRef?.Loading ?? false) @onclick=HideModal>Close</Button>
+		<Button Color="ButtonColor.Primary"  Disabled=@(EditNounRef?.Loading ?? false) @onclick=SaveModal>Submit</Button>
+	</FooterTemplate>
+</Modal>
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public Noun? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<Noun?> ValueChanged { get; set; }
+
+	[Parameter]
+	[EditorRequired]
+	public string? Id { get; set; }
+
+	[Parameter]
+	public string? Placeholder { get; set; } = "Nouns starting with...";
+
+	private CaptureRenderFragment Cap = new CaptureRenderFragment();
+	private SearchableSelect<Noun> Search = new SearchableSelect<Noun>();
+	private EditNoun? EditNounRef;
+	private Noun NounToAdd = new Noun();
+	private Modal NounModal = new Modal();
+
+	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
+	{
+		using var db = Contexts.FIABContext.Create(Config);
+		var results = await db.Nouns.Where(n => n.Name.ToLower().StartsWith(searchTerm.ToLower()))
+		.AsNoTracking()
+		.Take(8)
+		.ToListAsync();
+		return results;
+	}
+
+	private async Task ShowModal()
+	{
+		NounToAdd = new Noun { Name = Search.SearchTerm };
+		await NounModal.ShowAsync();
+	}
+	
+	private async Task HideModal()
+	{
+		await NounModal.HideAsync();
+	}
+
+	private async Task AfterSave()
+	{
+		await ValueChanged.InvokeAsync(NounToAdd);
+		await NounModal.HideAsync();
+	}
+
+	private async Task SaveModal()
+	{
+		await (EditNounRef?.Submit() ?? Task.CompletedTask);
+		await InvokeAsync(StateHasChanged);
+		// We could invoke AfterSave() here explicitly,
+		// But it's hooked-up as the OnSuccessfulSubmit
+		// parameter.  So it closes anytime there's a
+		// good submission
+	}
+}

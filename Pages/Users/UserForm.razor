@@ -1,0 +1,183 @@
+@* @page "/Users/Create" *@
+@page "/Users/{IdString}/Edit"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> _UserManager
+@inject IConfiguration Config
+
+<div class="container">
+	<DisplayError Error=Error />
+	@if(ShowSuccessMessage)
+	{
+		<div class="row">
+			<div class="col">
+				<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+			</div>
+		</div>
+	}
+
+	<AuthorizeView Roles=@Constants.Roles.Admin>
+		<NotAuthorized>
+			<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredAdmin</Alert>
+		</NotAuthorized>
+		<Authorized>
+			<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col">
+						<h1>@(Item == null ? $"User {IdString}" : Item.UserName)</h1>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col">
+						<h2>Roles</h2>
+						<p style="font-size: smaller;">Changes are written to the DB immediately, but user will need to logout and login to get new permissions.</p>
+					</div>
+				</div>
+
+				@foreach(var userRole in UserRoles)
+				{
+					<div class="row mt-2">
+						<div class="col-2 text-end"></div>
+						<div class="col">
+							<Switch Value="userRole.UserHasRole" ValueExpression="() => userRole.UserHasRole" Label=@userRole.Role.Name ValueChanged=userRole.Toggle />
+						</div>
+					</div>
+				}
+			</ShowLoading>
+		</Authorized>
+	</AuthorizeView>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+
+	private IdentityUser Item = new IdentityUser();
+	private List<string> CurrentUserRoles = new List<string>();
+	private List<IdentityRole> Roles = new List<IdentityRole>();
+	private List<UserRole> UserRoles = new List<UserRole>();
+
+	private bool Loading = true;
+	private Exception? Error;
+	private string SuccessMessage = string.Empty;
+	private bool ShowSuccessMessage = false;
+	private string FormId = System.Guid.NewGuid().ToString();
+	private string GetFormId(string name) => $"{FormId}-{name}";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				await SetUserDetails();
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private AuthDbContext GetAuthContext()
+	{
+		return AuthDbContext.Create(Config);
+	}
+
+	private async Task SetUserDetails()
+	{
+		Item = (await _UserManager.FindByIdAsync(IdString))!;
+		if(Item == null)
+		{
+			throw new Exception($"Could not find a user entry for id {IdString}");
+		}
+		CurrentUserRoles = (await _UserManager.GetRolesAsync(Item)).ToList();
+
+		using var authDb = GetAuthContext();
+		Roles = await authDb.Roles.ToListAsync();
+
+		UserRoles = new List<UserRole>();
+		foreach(var role in Roles)
+		{
+
+			UserRoles.Add(new UserRole(role, CurrentUserRoles.Contains(role.Name!), ToggleRoleForUser));
+		}
+	}
+
+	private async Task ShowSuccess(string message, int seconds = 5)
+	{
+		// TODO spice this up as a component that uses cancellationTokens.
+		SuccessMessage = message;
+		ShowSuccessMessage = true;
+
+		await Task.Delay(seconds * 1000);
+		ShowSuccessMessage = false;
+	}
+
+	private async Task ToggleRoleForUser(string role)
+	{
+		Loading = true;
+		Error = null;
+
+		try
+		{
+			var userInRole = await _UserManager.IsInRoleAsync(Item!, role);
+
+			if(userInRole)
+			{
+				await _UserManager.RemoveFromRoleAsync(Item!, role);
+				#pragma warning disable 4014
+				ShowSuccess($"Removed {Item.UserName} from {role}.");
+				#pragma warning restore 4014
+			}
+			else
+			{
+				await _UserManager.AddToRoleAsync(Item!, role);
+				#pragma warning disable 4014
+				ShowSuccess($"Added {Item.UserName} to {role}.");
+				#pragma warning restore 4014
+			}
+
+			await SetUserDetails();
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+		}
+		finally
+		{
+			Loading = false;
+			StateHasChanged();
+		}
+	}
+
+	private class UserRole	{
+		public UserRole(IdentityRole role, bool hasRole, Func<string, Task> toggle)
+		{
+			Role = role;
+			UserHasRole = hasRole;
+			ToggleHelper = toggle;
+		}
+
+		public IdentityRole Role { get; set; }
+		public bool UserHasRole { get; set; }
+		public Func<string, Task> ToggleHelper { get; set; }
+
+		public async Task Toggle(bool input)
+		{
+			if(UserHasRole != input)
+				await ToggleHelper(Role.Name!);
+		}
+	}
+}

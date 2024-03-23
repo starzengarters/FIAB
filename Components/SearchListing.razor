@@ -1,0 +1,129 @@
+@using Microsoft.AspNetCore.Components.Forms
+@typeparam T
+
+<div class="row">
+	<div class="col">
+		<div class="input-group">
+			<span class="input-group-text">
+				<Icon Name="IconName.Search" />
+			</span>
+			<InputText
+				@bind-Value=SearchTerm
+				@oninput=@((e) => SearchTermChanged(e.Value?.ToString() ?? string.Empty))
+				@onchange=@((e) => DoSearch())
+				placeholder="@Placeholder"
+				class="form-control"
+				autocomplete="off" />
+		</div>
+	</div>
+</div>
+
+@code
+{
+	private string SearchTerm = string.Empty;
+	private bool Initialized = false;
+
+	[Parameter]
+	[EditorRequired]
+	public IEnumerable<T> Value { get; set; } = new List<T>();
+	
+	[Parameter]
+	public EventCallback<IEnumerable<T>> ValueChanged { get; set; }
+
+	[Parameter]
+	public string Placeholder { get; set; } = "Search...";
+
+	[Parameter]
+	[EditorRequired]
+	public Func<string, Task<IEnumerable<T>>> Search { get; set; } = default!;
+	
+	public bool Searching { get; set; } = false;
+	
+	private CancelableOperation SearchOp = new CancelableOperation { TokenSource = new CancellationTokenSource(), Task = Task.CompletedTask };
+	private class CancelableOperation
+	{
+		public required CancellationTokenSource TokenSource;
+		public required Task Task;
+	}
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if(!Initialized)
+		{
+			await InvokeAsync(Initialize);
+		}
+	}
+
+	public void CancelSearch()
+	{
+		if(SearchOp.TokenSource != null)
+		{
+			var eolStatuses = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+			var problem = eolStatuses.Any(st => st == SearchOp.Task.Status);
+			if (!problem)
+			{
+				SearchOp.TokenSource.Cancel();
+			}
+		}
+	}
+
+	private async Task SearchTermChanged(string input)
+	{
+		if(input != SearchTerm)
+		{
+			SearchTerm = input;
+			await InvokeAsync(DoSearch);
+		}
+	}
+
+	protected async Task DoSearch()
+	{
+		// Console.WriteLine($"\tST: \"{SearchTerm}\"");
+
+		// Cancel any other running search
+		CancelSearch();
+
+		// Make a cancelable request to the API and process the response.
+		var ts = new CancellationTokenSource();
+		SearchOp = new CancelableOperation
+		{
+			TokenSource = ts,
+			Task = Task.Run(async () =>
+			{
+				await InvokeAsync(async () =>
+				{
+					Searching = true;
+					// Wait for the user to stop typing before querying DB.
+					await Task.Delay(500);
+
+					// If our Token didn't get canceled query the DB.
+					if (ts.Token.IsCancellationRequested == false)
+					{
+						var results = await Search(SearchTerm);
+						// Console.WriteLine($"\tSearch({SearchTerm}): {results.Count()}");
+
+						// Trip to the DB could've taken a while, make sure we're still not cancelled.
+						if(ts.Token.IsCancellationRequested == false)
+						{
+							Searching = false;// Doing this first so it's caught when ValueChanged is invoked.
+							await ValueChanged.InvokeAsync(results);
+						}
+					}
+				});
+				
+			}, ts.Token)
+		};
+
+		await InvokeAsync(async () => await SearchOp.Task);
+	}
+
+	public async Task Initialize()
+	{
+		if(Search != null)
+		{
+			var results = await Search(SearchTerm);
+			await InvokeAsync(async () => await ValueChanged.InvokeAsync(results));
+			Initialized = true;
+		}
+	}
+}

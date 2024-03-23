@@ -1,0 +1,59 @@
+@using FIAB.Models
+@if(CanEdit && Editing)
+{
+	<EditRelationship Relationship=Relationship OnCancel=ToggleEditing />
+}
+else
+{
+	<div class="col">
+		<div class="card">
+			<h5 class="card-header">
+				@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span>
+				
+			</h5>
+			<div class="card-body">
+				<h5 class="card-title">@Relationship.RelationshipType?.Name <span style="font-size: smaller">@Relationship.RelationshipType?.ShortDescription</span></h5>
+				<p class="card-text">@Relationship.Object?.Name <span style="font-size: smaller">@Relationship.Object?.ShortDescription</span></p>
+				
+				@if(Relationship.Started != null)
+				{
+					<div>
+						<strong>Started: </strong> @(Relationship.StartedIsApproximate ? "c." : "") @Relationship.Started
+					</div>
+				}
+
+				@if(Relationship.Ended != null)
+				{
+					<div>
+						<strong>Ended: </strong> @(Relationship.EndedIsApproximate ? "c." : "") @Relationship.Ended
+					</div>
+				}
+			</div>
+			@if(CanEdit)
+			{
+				<div class="card-footer d-grid gap-2 d-md-flex justify-content-md-end">
+					<Button Color="ButtonColor.Secondary" Size="Size.Small" Outline="true" @onclick=ToggleEditing>Edit</Button>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public Relationship Relationship { get; set; } = default!;
+	
+	[Parameter]
+	public bool CanEdit { get; set; } = false;
+
+	[Parameter]
+	public bool Editing { get; set; } = false;
+
+	private void ToggleEditing()
+	{
+		Editing = !Editing;
+		// StateHasChanged();
+	}
+}

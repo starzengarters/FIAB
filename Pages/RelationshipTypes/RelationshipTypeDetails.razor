@@ -1,0 +1,97 @@
+@page "/RelationshipTypes/{IdString}"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+<DisplayError Error=Error />
+
+<AuthorizeView Roles=@Constants.Roles.User>
+	<NotAuthorized>
+		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+	</NotAuthorized>
+	<Authorized>
+		<ShowLoading Loading=Loading>
+			<div class="row">
+				<div class="col">
+					<h1>@(Item == null ? $"RelationshipType {Id}" : Item.Name)</h1>
+				</div>
+				<div class="col text-end pt-2">
+					<Button Type="ButtonType.Link" To=@($"/RelationshipTypes/{Id}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
+				</div>
+			</div>
+			<div class="row mt-2">
+				<div class="col-2 text-end"><strong>Short Description:</strong></div>
+				<div class="col">
+					@Item?.ShortDescription
+				</div>
+			</div>
+			@if(Item?.Parent != null)
+			{
+				<div class="row mt-2">
+					<div class="col-2 text-end"><strong>Parent:</strong></div>
+					<div class="col">
+						<a href="/RelationshipTypes/@Item.Parent.Id">@Item.Parent.Name</a>
+						<span class="fs-6">@Item.Parent.ShortDescription</span>
+					</div>
+				</div>
+			}
+			<div class="row mt-2">
+				<div class="col-2 text-end"><strong>Details:</strong></div>
+				<div class="col">
+					<TextToHtml Value=@Item?.Details />
+				</div>
+			</div>
+		</ShowLoading>
+	</Authorized>
+</AuthorizeView>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private int Id;
+
+	private bool Loading = true;
+	private Exception? Error;
+	private RelationshipType? Item;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				Id = int.Parse(IdString);
+				var tasks = new List<Task> { SetItem() };
+				await Task.WhenAll(tasks);
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	// Makes browsing to another RelationshipType work(Eg. Links to Parent)
+	protected override async Task OnParametersSetAsync()
+	{
+		await OnAfterRenderAsync(true);
+	}
+
+	private async Task SetItem()
+	{
+		using var context = FIABContext.Create(Config);
+		Item = await context.RelationshipTypes
+			.Include(n => n.Parent)
+			.SingleAsync(n => n.Id == Id);
+	}
+}

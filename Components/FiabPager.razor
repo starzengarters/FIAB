@@ -1,0 +1,107 @@
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@inject IConfiguration Config
+@typeparam T where T : Entity
+
+<Pagination
+	ActivePageNumber=Page
+	TotalPages=Pages
+	PageChanged=OnPageChangedAsync
+	DisplayPages="5"
+	Alignment="Alignment.Center"
+	FirstLinkIcon="IconName.ChevronDoubleLeft"
+	PreviousLinkIcon="IconName.ChevronLeft"
+	NextLinkIcon="IconName.ChevronRight"
+	LastLinkIcon="IconName.ChevronDoubleRight" />
+
+@if(Records == 0)
+{
+	<p>No records.</p>
+}
+
+@ChildContent
+
+<Pagination
+	ActivePageNumber=Page
+	TotalPages=Pages
+	PageChanged=OnPageChangedAsync
+	DisplayPages="5"
+	Alignment="Alignment.Center"
+	FirstLinkIcon="IconName.ChevronDoubleLeft"
+	PreviousLinkIcon="IconName.ChevronLeft"
+	NextLinkIcon="IconName.ChevronRight"
+	LastLinkIcon="IconName.ChevronDoubleRight" />
+<div class="row">
+	<div class="col text-center muted">
+		@Records records total
+	</div>
+</div>
+
+@code
+{
+	// TODO Make this smart enough to hunt for query parameters so folks can deep-link to a specific page.
+
+	[Parameter]
+	[EditorRequired]
+	public IEnumerable<T> Value { get; set; } = new List<T>();
+	
+	[Parameter]
+	public EventCallback<IEnumerable<T>> ValueChanged { get; set; }
+	
+	[Parameter]
+	public RenderFragment ChildContent { get; set; } = default!;
+
+	private int Page = 1;
+	private int PageSize = 25;
+	private int Records = 0;
+	private int Pages => (int) Math.Ceiling(Records/(double)PageSize);
+
+
+	public List<T> FilteredList { get; private set; } = new List<T>();
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await Filter();
+	}
+
+	private async Task OnPageChangedAsync(int newPageNumber)
+	{
+		Page = newPageNumber;
+		await Filter();
+	}
+
+	private async Task Filter()
+	{
+		//Console.WriteLine($"From Pagination.Filter({DateTime.Now.TimeOfDay})");
+
+		// Shenanigans if Value is a detatched IQueryable.
+		// Try to attach it to a live dbContext.
+		// Thank You, https://stackoverflow.com/a/30719538 for this glorious hack.
+		if(Value is IQueryable)
+		{
+			using var context = FIABContext.Create(Config);
+			var x = Value.AsQueryable();
+			var mySet = context.Set<T>().AsQueryable();
+			var queryable = mySet.Provider.CreateQuery<T>(x.Expression);
+			await FilterQueryable(queryable);
+		}
+		else
+		{
+			await FilterQueryable(Value.AsQueryable());
+		}
+	}
+
+	private async Task FilterQueryable(IQueryable<T> queryable)
+	{
+		var pageSize = (int)PageSize;
+		var page = (int)Page;
+		
+		FilteredList = await queryable
+			.Skip((pageSize * (page - 1)))
+			.Take(pageSize)
+			.ToListAsync();
+		
+		Records = queryable.Count();
+	}
+}

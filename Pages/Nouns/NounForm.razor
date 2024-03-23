@@ -1,0 +1,69 @@
+@page "/Nouns/Create"
+@page "/Nouns/{IdString}/Edit"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+<DisplayError Error=Error />
+
+
+<ShowLoading Loading=Loading>
+	<h1>
+		@(Editing ? $"Editing {Item.Id}" : "Create")
+	</h1>
+	<EditNoun @bind-Value=Item />
+</ShowLoading>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private Noun Item = new Noun();
+	private bool Editing => Item.Id != 0;
+
+	private Exception? Error;
+
+	private bool Loading = true;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				int id = 0;
+				int.TryParse(IdString, out id);
+				
+				if(id != 0)
+				{
+					await SetItem(id);
+				}
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task SetItem(int id)
+	{
+		using var context = GetContext();
+		Item = await context.Nouns.SingleAsync(n => n.Id == id);
+	}
+}

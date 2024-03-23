@@ -1,0 +1,290 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@typeparam T where T : Entity
+@inject IConfiguration Config
+@inject IJSRuntime JS
+
+<div class="row">
+	<div class="col">
+	@if(_CancelableSearch != null)
+	{
+		<div class="input-group">
+			@if(Value == null)
+			{
+				<InputText
+					@bind-Value=SearchTerm
+					@oninput=@((e) => DoSearch(e.Value?.ToString() ?? string.Empty))
+					@onkeyup=@((e) => KeyUp(e))
+					@onfocus=@((e) => _CancelableSearch.Showing = true)
+					placeholder="@Placeholder"
+					class="form-control"
+					data-bs-toggle="dropdown"
+					id=@Id
+					autocomplete="off" />
+			}
+			else
+			{
+				<div class="form-control form-control-sm my-0 py-0 bg-light">
+					<div class="row">
+						<div class="col">
+							@_Name
+						</div>
+					</div>
+					<div class="row">
+						<div class="col small">
+							@_Description
+						</div>
+					</div>
+				</div>
+			}
+			<Button Type="ButtonType.Button" Color="ButtonColor.Danger" Outline=true Disabled=@(Value == null) @onclick=ClearValue>Clear</Button>
+			<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
+				@if(_CancelableSearch.Exception != null)
+				{
+					<li>
+						<span class="dropdown-item-text">
+							<Alert Color="AlertColor.Danger">@_CancelableSearch.Exception.Message</Alert>
+						</span>
+					</li>
+				}
+				@if(_CancelableSearch.Searching)
+				{
+					<li>
+						<span class="dropdown-item-text">
+							<Spinner Type="SpinnerType.Dots" />
+						</span>
+					</li>
+				}
+				else
+				{
+					@if(Options.Count() == 0)
+					{
+						<li>
+							@if(string.IsNullOrWhiteSpace(SearchTerm))
+							{
+								<span class="dropdown-item-text">
+									<Icon Name="IconName.Search" class="me-2" />Enter a search term.
+								</span>
+							}
+							else
+							{
+								<span class="dropdown-item-text">
+									<Icon Name="IconName.ExclamationCircle" class="me-2" /> No results start with "@SearchTerm"
+									@if(AddOptionFragment != null)
+									{
+										@AddOptionFragment
+									}
+								</span>
+							}
+					</li>
+					}
+					@foreach(var option in Options.Select((value, i) => new {i, value}))
+					{
+						<li>
+							<a
+								class="dropdown-item"
+								href="#"
+								id="@(Id)-Item@(option.i)"
+								@onclick=@(() => OptionClicked(option.value.Id))
+								@onclick:preventDefault="true"
+							>
+								@GetName(option.value) - @GetDescription(option.value)
+							</a>
+						</li>
+					}
+				}
+			</ul>
+		</div>
+	}
+	</div>
+</div>
+
+
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public T? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<T?> ValueChanged { get; set; }
+
+	[Parameter]
+	[EditorRequired]
+	public string? Id { get; set; }
+
+	[Parameter]
+	[EditorRequired]
+	public Func<string, Task<IEnumerable<T>>> Search { get; set; } = default!;
+
+	[Parameter]
+	public string? Placeholder { get; set; } = "Search Term...";
+
+	[Parameter]
+	public Func<T, string> GetName { get; set; } = GetNameDefault;
+	public string? _Name => Value == null ? null : GetName(Value);
+
+	[Parameter]
+	public Func<T, string> GetDescription { get; set; } = GetDescriptionDefault;
+	public string _Description => Value == null ? string.Empty : GetDescription(Value);
+
+	[Parameter]
+	public RenderFragment? AddOptionFragment { get; set; }
+
+	public string SearchTerm { get; private set; } = string.Empty;
+	private CancelableSearch _CancelableSearch = new CancelableSearch();
+
+	private IEnumerable<T> Options = new List<T>();
+	
+	
+	#region Generic Helper Methods
+	private static string GetNameDefault(T input)
+	{
+		// Use reflection to check if we have a Name property.
+		var nameProp = input.GetType().GetProperties().SingleOrDefault(p => p.Name == nameof(Noun.Name));
+		if(nameProp != null)
+		{
+			var nameVal = nameProp.GetValue(input, null)?.ToString();
+			if(!string.IsNullOrWhiteSpace(nameVal))
+			{
+				return nameVal;
+			}
+		}
+
+		// The dead simple default: ModelName #id
+		return $"{input.GetType().Name} {input.Id}";
+	}
+
+	private static string GetDescriptionDefault(T input)
+	{
+		// If the model has a short description property use that.
+		var sdProp = input.GetType().GetProperties().SingleOrDefault(p => p.Name == nameof(Noun.ShortDescription));
+		if(sdProp != null)
+		{
+			var sdVal = sdProp.GetValue(input, null)?.ToString();
+			if(!string.IsNullOrWhiteSpace(sdVal))
+			{
+				return sdVal;
+			}
+		}
+		return string.Empty;
+	}
+	#endregion
+
+
+	#region Search
+	private class CancelableSearch
+	{
+		public Task? Task { get; set; }
+		public bool Searching => Task != null && !EolStatuses.Contains(Task!.Status);
+		public bool Showing { get; set; } = false;
+		
+		public CancellationTokenSource? TokenSource { get; set; }
+		public Exception? Exception;
+
+		public static List<TaskStatus> EolStatuses = new List<TaskStatus> { TaskStatus.RanToCompletion, TaskStatus.Canceled };
+
+		public void CancelSearch()
+		{
+			if(TokenSource != null)
+			{
+				var problem = EolStatuses.Any(st => st == Task?.Status);
+				if (!problem)
+				{
+					TokenSource.Cancel();
+				}
+			}
+		}
+	}
+
+	private async Task KeyUp(KeyboardEventArgs evt)
+	{
+		if(!(evt.AltKey || evt.CtrlKey || evt.ShiftKey))
+		{
+			if(evt.Key == "ArrowDown")
+			{
+				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item0");
+			}
+			if(evt.Key == "ArrowUp")
+			{
+				var lastItem = Options.Count() - 1;
+				await JS.InvokeVoidAsync("SetFocusToElement", $"{Id}-Item{lastItem}");
+			}
+		}
+		await Task.CompletedTask;
+	}
+
+	protected async Task DoSearch(string value)
+	{
+		if(SearchTerm != value)
+		{
+			// Cancel any other running search
+			_CancelableSearch.CancelSearch();
+			
+			// Update the value bound to the search input.
+			// TODO - this should probably be down in the Cancelable block.
+			SearchTerm = value;
+
+			// Make a cancelable request to the API and process the response.
+			var ts = new CancellationTokenSource();
+			_CancelableSearch = new CancelableSearch
+			{
+				TokenSource = ts,
+				Task = Task.Run(async () =>
+				{
+					if(string.IsNullOrWhiteSpace(SearchTerm))
+					{
+						Options = new List<T>();
+						return;
+					}
+
+					// Wait for the user to stop typing before querying DB.
+					await Task.Delay(500);
+					var results = await Search(SearchTerm);
+
+					// If our Token didn't get canceled query the DB.
+					if (ts.Token.IsCancellationRequested == false)
+					{
+						try
+						{
+							if(results == null)
+							{
+								throw new Exception($"No Results for term \"{SearchTerm}\"");
+							}
+
+							Options = results;
+							_CancelableSearch.Exception = null;
+						}
+						catch(Exception ex)
+						{
+							_CancelableSearch.Exception = ex;
+						}
+					}
+				}, ts.Token)
+			};
+
+			await _CancelableSearch.Task;
+		}
+	}
+
+	private async Task OptionClicked(int id)
+	{
+		using var db = Contexts.FIABContext.Create(Config);
+		var opt = Options.Single(i => i.Id == id);
+		var set = db.Set<T>();
+		var x = await set.SingleOrDefaultAsync(n => n.Id == id);
+		await ValueChanged.InvokeAsync(x);
+		
+		// Hide the Options, and discard the Options.
+		_CancelableSearch.Showing = false;
+		Options = new List<T>();
+	}
+
+	private async Task ClearValue()
+	{
+		_CancelableSearch.Showing = false;
+		await ValueChanged.InvokeAsync(null);
+		SearchTerm = string.Empty;
+	}
+	#endregion
+}

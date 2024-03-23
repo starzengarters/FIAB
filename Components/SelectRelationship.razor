@@ -1,0 +1,59 @@
+@using FIAB.Models
+@using Microsoft.AspNetCore.Components.Forms
+@namespace FIAB.Components
+
+<InputSelect
+	class="form-select"
+	id=@Id
+	@attributes=InputAttributes
+	Value="@Backing.Id"
+	ValueExpression="@(() => Backing.Id)"
+	ValueChanged="@((int e) => Bleh(e))"
+	>
+@* TODO - Do recursion and indentation for parent child relationships. *@
+	<option value="0"></option>
+@foreach(var relType in Options)
+{
+	<option value="@relType.Id">@relType.Name</option>
+	@* TODO - Show the value of relType.ShortDescription*@
+}
+</InputSelect>
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public RelationshipType? Value { get; set; }
+
+	[Parameter]
+	public EventCallback<RelationshipType> ValueChanged { get; set; }
+
+	// A kind of "backing" value for the InputSelect shenanigans.
+	// The getter just reads Input.Id
+	// The setter invokes a method that updates Input
+	private RelationshipType Backing { get; set;} = new RelationshipType();
+
+	[Parameter]
+	[EditorRequired]
+	public IEnumerable<RelationshipType> Options { get; set; } = new List<RelationshipType>();
+
+	[Parameter]
+	public string Id { get; set; } = System.Guid.NewGuid().ToString();
+
+	[Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? InputAttributes { get; set; }
+
+	protected override void OnParametersSet()
+	{
+		// Only update the backing value if it has changed
+		if(Backing.Id != Value?.Id)
+			Backing.Id = Value?.Id ?? 0;
+	}
+
+	private async Task Bleh(int id)
+	{
+		var newValue = Options.SingleOrDefault(o => o.Id == id);
+		await ValueChanged.InvokeAsync(newValue);
+		// Backing.Id = id;
+		StateHasChanged();
+	}
+}

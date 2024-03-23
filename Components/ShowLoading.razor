@@ -1,0 +1,26 @@
+@namespace FIAB.Components
+@if(Loading)
+{
+	<div class="row">
+		<div class="offset-4 col-4 mt-4">
+			<Spinner Title="Loading Page" />
+			<span class="align-top ms-1">@Text</span>
+		</div>
+	</div>
+}
+else
+{
+	@ChildContent
+}
+@code
+{
+	[Parameter]
+	[EditorRequired]
+	public bool Loading { get; set; }
+
+	[Parameter]
+	public string Text { get; set; } = "Loading...";
+
+	[Parameter]
+	public RenderFragment ChildContent { get; set; } = default!;
+}
