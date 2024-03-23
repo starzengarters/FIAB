@@ -6,8 +6,7 @@
 <DisplaySuccess @ref=Success />
 @* TODO - Figure out why ShowLoading must be in this component, and not its parent.*@
 <ShowLoading Loading=Loading>
-	@* TODO figure out why preseeing enter doesn't submit the form in the modal. *@
-	<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(Submit))>
+	<EditForm Model=Value OnValidSubmit=Submit>
 		<div class="row mt-3">
 			<div class="col">
 				<label for=@GetFormId("name") class="form-label">
@@ -45,14 +44,11 @@
 				<ValidationSummary/>
 			</div>
 		</div>
-		@if(ShowButtons)
-		{
-			<div class="row mt-3">
-				<div class="col">
-					<button type="submit" class="btn btn-primary">Submit</button>
-				</div>
+		<div class="row mt-3 @(!ShowButtons ? "d-none" : string.Empty)">
+			<div class="col">
+				<button type="submit" class="btn btn-primary">Submit</button>
 			</div>
-		}
+		</div>
 	</EditForm>
 </ShowLoading>
 @code
