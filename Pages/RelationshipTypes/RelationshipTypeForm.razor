@@ -8,87 +8,14 @@
 @inject IConfiguration Config
 
 <div class="container">
-<DisplayError Error=Error />
+	<DisplayError Error=Error />
 
-@if(ShowSuccessMessage)
-{
-	<div class="row">
-		<div class="col">
-			<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
-		</div>
-		<strong>Success</strong><br/>
-	</div>
-}
-
-<AuthorizeView Roles=@Constants.Roles.User Context="auth">
-	<NotAuthorized>
-		<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
-	</NotAuthorized>
-	<Authorized>
-		<ShowLoading Loading=Loading>
-			<h1>
-				@(Editing ? $"Editing {Item.Id}" : "Create")
-			</h1>
-			
-			<EditForm EditContext="EC" OnSubmit="SubmitForm">
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("name") class="form-label">
-							Name
-						</label>
-						<InputText @bind-Value=Item.Name id=@GetFormId("name") class="form-control" />
-						<ValidationMessage For=@(() => Item.Name) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("ShortDescription") class="form-label">
-							Short Description
-						</label>
-						<InputText
-							@bind-Value=Item.ShortDescription
-							id=@GetFormId("ShortDescription")
-							class="form-control"
-							placeholder="Short description returned in search results" />
-						<ValidationMessage For=@(() => Item.ShortDescription) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("Parent") class="form-label">
-							Parent Relationship Type
-						</label>
-						<SelectRelationship
-							@bind-Value=Item.Parent
-							Options=PossibleParents
-							Id=@GetFormId("Parent") />
-						<ValidationMessage For=@(() => Item.Parent) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<label for=@GetFormId("Details") class="form-label">
-							Details
-						</label>
-						<InputTextArea @bind-Value=Item.Details id=@GetFormId("Details") class="form-control" rows="7" />
-						<ValidationMessage For=@(() => Item.Details) />
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<DataAnnotationsValidator/>
-						<ValidationSummary/>
-					</div>
-				</div>
-				<div class="row mt-3">
-					<div class="col">
-						<button type="submit" class="btn btn-primary">Submit</button>
-					</div>
-				</div>
-			</EditForm>
-		</ShowLoading>
-	</Authorized>
-</AuthorizeView>
+	<ShowLoading Loading=Loading>
+		<h1>
+			@(Editing ? $"Editing {Item.Id}" : "Create")
+		</h1>
+		<EditRelationshipType @bind-Value=Item />
+	</ShowLoading>
 </div>
 
 @code
@@ -96,16 +23,10 @@
 	[Parameter]
 	public string IdString { get; set; } = string.Empty;
 	private RelationshipType Item = new RelationshipType();
-	private List<RelationshipType> PossibleParents = new List<RelationshipType>();
-	private EditContext EC = new EditContext(new RelationshipType());
 	private bool Editing => Item.Id != 0;
 
 	private bool Loading = true;
 	private Exception? Error;
-	private string SuccessMessage = string.Empty;
-	private bool ShowSuccessMessage = false;
-	private string FormId = System.Guid.NewGuid().ToString();
-	private string GetFormId(string name) => $"{FormId}-{name}";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -116,7 +37,7 @@
 				int id = 0;
 				int.TryParse(IdString, out id);
 				
-				var tasks = new List<Task> { SetPossibleParents(id) };
+				var tasks = new List<Task>();
 				if(id != 0)
 				{
 					tasks.Add(SetItem(id));
@@ -147,72 +68,5 @@
 		Item = await context.RelationshipTypes
 			.Include(n => n.Parent)
 			.SingleAsync(n => n.Id == id);
-	}
-
-	private async Task SetPossibleParents(int id)
-	{
-		using var context = GetContext();
-		PossibleParents = await context.RelationshipTypes
-			.Where(rt => rt.Id != id)// No self-references!
-			.OrderBy(r => r.Parent!.Name)
-			.ThenBy(r => r.Name)
-			.ToListAsync();
-	}
-
-	private async Task ShowSuccess(string message, int seconds = 5)
-	{
-		// TODO spice this up as a component that uses cancellationTokens.
-		SuccessMessage = message;
-		ShowSuccessMessage = true;
-
-		await Task.Delay(seconds * 1000);
-		ShowSuccessMessage = false;
-	}
-
-	private async Task SubmitForm()
-	{
-		var encounteredError = false;
-		try
-		{
-			Error = null;
-			Loading = true;
-			using var context = GetContext();
-
-			if(Editing)
-			{
-				context.Attach(Item);
-				context.Update(Item);
-				
-				// TODO - figure out why saving non-null values works, but setting null values don't stick.
-				// This if statement works, but I resent having to do it.
-				// I guess once it's hidden in a service I won't hate it so much.
-				if(Item.Parent == null)
-					Item.ParentId = null;
-				
-				await context.SaveChangesAsync();
-			}
-			else
-			{
-				await context.RelationshipTypes.AddAsync(Item);
-				await context.SaveChangesAsync();
-				
-			}
-
-		}
-		catch(Exception ex)
-		{
-			Error = ex;
-			encounteredError = true;
-		}
-		finally
-		{
-			Loading = false;
-
-			if(!encounteredError)
-			{
-				var action = Editing ? "edited" : "created";
-				await ShowSuccess($"{DateTime.Now} Relationship Type {Item.Id} {action}.");
-			}
-		}
 	}
 }
