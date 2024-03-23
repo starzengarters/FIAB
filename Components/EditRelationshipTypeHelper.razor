@@ -109,6 +109,9 @@
 				using var context = FIABContext.Create(Config);
 				if(Editing)
 				{
+					// Unset id properties to really break relationships.
+					Value.ParentId = Value.Parent?.Id;
+					
 					context.Attach(Value);
 					context.Update(Value);
 					context.SaveChanges();
@@ -118,6 +121,7 @@
 					// Ensure we're using a valid, existing entity.
 					if(Value.Parent != null)
 						Value.Parent = await context.RelationshipTypes.SingleAsync(n => n.Id == Value.Parent.Id);
+
 					context.RelationshipTypes.Add(Value);
 					context.SaveChanges();
 				}

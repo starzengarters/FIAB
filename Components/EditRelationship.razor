@@ -234,6 +234,10 @@
 			{
 				if(Editing)
 				{
+					// Unset id properties to really break relationships.
+					FormRelationship.RelationshipTypeId = FormRelationship.RelationshipType?.Id;
+					FormRelationship.ObjectId = FormRelationship.Object?.Id;
+
 					context.Attach(FormRelationship);
 					context.Update(FormRelationship);
 					await context.SaveChangesAsync();
