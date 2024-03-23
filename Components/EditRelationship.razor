@@ -30,7 +30,6 @@
 							Relationship Type
 						</label>
 						@* TODO - Do recursion and indentation for parent child relationships. *@
-						@* TODO - Provision for adding a new RelationshipType here, inline. *@
 						<RelationshipTypeSearchableSelect @bind-Value=FormRelationship.RelationshipType Id=@GetFormId("RelationshipType") />
 					</div>
 				</div>
@@ -39,8 +38,6 @@
 						<label for=@GetFormId("Object") class="form-label">
 							Object
 						</label>
-						@* TODO - Do recursion and indentation for parent child relationships. *@
-						@* TODO - Provision for adding a new Object here, inline. *@
 						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object") />
 					</div>
 				</div>
