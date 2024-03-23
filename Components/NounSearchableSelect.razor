@@ -12,11 +12,11 @@
 
 <Modal @ref="NounModal" Title="Add a Noun">
 	<BodyTemplate>
-		<EditNoun @bind-Value=NounToAdd ShowButtons=false />
+		<EditNoun @ref=EditNounRef @bind-Value=NounToAdd ShowButtons=false />
 	</BodyTemplate>
 	<FooterTemplate>
-		<Button Color="ButtonColor.Secondary" @onclick=HideModal>Close</Button>
-		<Button Color="ButtonColor.Primary">Save changes</Button>
+		<Button Color="ButtonColor.Secondary" Disabled=@(EditNounRef?.Loading ?? false) @onclick=HideModal>Close</Button>
+		<Button Color="ButtonColor.Primary"  Disabled=@(EditNounRef?.Loading ?? false) @onclick=SaveModal>Submit</Button>
 	</FooterTemplate>
 </Modal>
 
@@ -38,6 +38,7 @@
 
 	private CaptureRenderFragment Cap = new CaptureRenderFragment();
 	private SearchableSelect<Noun> Search = new SearchableSelect<Noun>();
+	private EditNoun? EditNounRef;
 	private Noun NounToAdd = new Noun();
 	private Modal NounModal = new Modal();
 
@@ -60,5 +61,16 @@
 	private async Task HideModal()
 	{
 		await NounModal.HideAsync();
+	}
+
+	private async Task SaveModal()
+	{
+		await (EditNounRef?.Submit() ?? Task.CompletedTask);
+		await InvokeAsync(StateHasChanged);
+		if(EditNounRef?.Error == null)
+		{
+			await ValueChanged.InvokeAsync(NounToAdd);
+			await NounModal.HideAsync();
+		}
 	}
 }

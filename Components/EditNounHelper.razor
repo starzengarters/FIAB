@@ -6,7 +6,8 @@
 <DisplaySuccess @ref=Success />
 @* TODO - Figure out why ShowLoading must be in this component, and not its parent.*@
 <ShowLoading Loading=Loading>
-	<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(DoAndShow))>
+	@* TODO figure out why preseeing enter doesn't submit the form in the modal. *@
+	<EditForm EditContext="EC" OnSubmit=@(async () => await InvokeAsync(Submit))>
 		<div class="row mt-3">
 			<div class="col">
 				<label for=@GetFormId("name") class="form-label">
@@ -71,7 +72,7 @@
 	[Parameter]
 	public bool ShowButtons { get; set; } = true;
 
-	private Exception? Error;
+	public Exception? Error { get; set; }
 	private DisplaySuccess Success = new DisplaySuccess();
 
 	private EditContext EC = new EditContext(new Noun());
@@ -122,7 +123,7 @@
 		return goodRun;
 	}
 
-	private async Task DoAndShow()
+	public async Task Submit()
 	{
 		var goodWork = await DoWork();
 		if(goodWork)
