@@ -20,7 +20,7 @@
 						<h1>Edit Relationship @Item?.Id</h1>
 					</div>
 				</div>
-				<EditRelationship Relationship=Item OnCancel=@(async () => await Task.CompletedTask) />
+				<EditRelationship Relationship=Item OnCancel=@(async () => await Task.CompletedTask) LockSubject=false />
 			</ShowLoading>
 		</Authorized>
 	</AuthorizeView>

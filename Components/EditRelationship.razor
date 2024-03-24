@@ -8,7 +8,10 @@
 
 <div class="col">
 	<div class="card">
+	@if(LockSubject)
+	{
 		<h5 class="card-header">@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span></h5>
+	}
 		@if(FormRelationship != null)
 		{
 		<EditForm EditContext="EC" OnSubmit="SubmitForm">
@@ -25,6 +28,17 @@
 					</div>
 				}
 				<ShowLoading Loading=Loading>
+				@if(!LockSubject)
+				{
+					<div class="row">
+						<div class="col">
+							<label for=@GetFormId("Subject") class="form-label">
+								Subject
+							</label>
+							<NounSearchableSelect @bind-Value=FormRelationship.Subject Id=@GetFormId("Subject") />
+						</div>
+					</div>
+				}
 				<div class="row">
 					<div class="col">
 						<label for=@GetFormId("RelationshipType") class="form-label">
@@ -103,10 +117,7 @@
 	public Action OnCancel { get; set; } = default!;
 
 	[Parameter]
-	public IEnumerable<RelationshipType> RelationshipTypes { get; set; } = new List<RelationshipType>();
-	
-	[Parameter]
-	public IEnumerable<Noun> Objects { get; set;} = new List<Noun>();
+	public bool LockSubject { get; set; } = true;
 	
 	private bool Loading = true;
 	private Relationship? FormRelationship = null!;
