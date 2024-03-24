@@ -1,0 +1,78 @@
+@page "/Relationships/{IdString}"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+	<DisplayError Error=Error />
+
+	<AuthorizeView Roles=@Constants.Roles.User>
+		<NotAuthorized>
+			<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+		</NotAuthorized>
+		<Authorized>
+			<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col">
+						<h1>Relationship @Item?.Id</h1>
+					</div>
+					<div class="col text-end pt-2">
+						<Button Type="ButtonType.Link" To=@($"/Relationships/{Id}/Edit") Color="ButtonColor.Primary" Size="Size.Small">Edit</Button>
+					</div>
+				</div>
+				<DisplayRelationship Relationship="Item" CanEdit="false" />
+			</ShowLoading>
+		</Authorized>
+	</AuthorizeView>
+</div>
+
+@code
+{
+	[Parameter]
+	public string IdString { get; set; } = string.Empty;
+	private int Id;
+
+	private bool Loading = true;
+	private Exception? Error;
+	private Relationship? Item;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				Id = int.Parse(IdString);
+				var tasks = new List<Task> { SetItem() };
+				await Task.WhenAll(tasks);
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	// Makes browsing to another RelationshipType work(Eg. Links to Parent)
+	protected override async Task OnParametersSetAsync()
+	{
+		await OnAfterRenderAsync(true);
+	}
+
+	private async Task SetItem()
+	{
+		using var context = FIABContext.Create(Config);
+		Item = await context.Relationships
+			.Include(r => r.Subject)
+			.Include(r => r.RelationshipType)
+			.Include(r => r.Object)
+			.SingleAsync(n => n.Id == Id);
+	}
+}

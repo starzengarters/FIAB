@@ -1,0 +1,144 @@
+@page "/Relationships"
+@using FIAB.Models;
+@using FIAB.Contexts;
+@using Microsoft.EntityFrameworkCore;
+@using System.Linq
+@inject IConfiguration Config
+
+<div class="container">
+	<DisplayError Error=Error />
+
+	<AuthorizeView Roles=@Constants.Roles.User>
+		<NotAuthorized>
+			<Alert Color="AlertColor.Warning">@Constants.Messages.RoleRequiredUser</Alert>
+		</NotAuthorized>
+		<Authorized>
+			<ShowLoading Loading=Loading>
+				<div class="row">
+					<div class="col-8 ps-0">
+						<h1 class="text-start">Relationships</h1>
+					</div>
+					<div class="col-md-4 text-end">
+						<Button Type="ButtonType.Link" Color="ButtonColor.Primary" To="/Relationships/Create"> Add a new Relationship</Button>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<SearchListing @ref=Search @bind-Value=Listing Search=FilterListing Placeholder="Search Relationships..." />
+					</div>
+				</div>
+				<div class="row">
+					<ShowLoading Loading=_Searching Text="Filtering...">
+						<FiabPager @ref=Paging @bind-Value=Listing>
+							<table class="table table-striped">
+								<thead>
+									<tr>
+										<th scope="col" class="col">Subject</th>
+										<th scope="col" class="col">Relationship<br/>Types</th>
+										<th scope="col" class="col">Object</th>
+										<th scope="col" class="col">Actions</th>
+									</tr>
+								</thead>
+								<tbody>
+								@foreach(var r in Paging.FilteredList)
+								{
+									<tr>
+										<td>
+											@r.Subject?.Name<br/>
+											<span style="font-size: smaller" class="muted">@r.Subject?.ShortDescription</span>
+										</td>
+										<td>
+											@r.RelationshipType?.Name<br/>
+											<span style="font-size: smaller" class="muted">@r.RelationshipType?.ShortDescription</span>
+										</td>
+										<td>
+											@r.Object?.Name<br/>
+											<span style="font-size: smaller" class="muted">@r.Object?.ShortDescription</span>
+										</td>
+										<td class="text-end">
+											<Button Type="ButtonType.Link" To=@($"/Relationships/{r.Id}") Color="ButtonColor.Primary" Size="Size.Small">View</Button>
+											<Button Type="ButtonType.Link" To=@($"/Relationships/{r.Id}/Edit") Color="ButtonColor.Primary" Outline="true" Size="Size.Small">Edit</Button>
+										</td>
+									</tr>
+								}
+								</tbody>
+							</table>
+						</FiabPager>
+					</ShowLoading>
+				</div>
+			</ShowLoading>
+		</Authorized>
+	</AuthorizeView>
+</div>
+
+@code
+{
+	private bool Loading = true;
+	private Exception? Error;
+
+	private SearchListing<Relationship> Search = new SearchListing<Relationship>();
+	private bool _Searching => Search?.Searching ?? false;
+	private FiabPager<Relationship> Paging = new FiabPager<Relationship>();
+
+	private IEnumerable<Relationship> Listing = new List<Relationship>();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if(firstRender)
+		{
+			try
+			{
+				await Task.CompletedTask;
+			}
+			catch(Exception ex)
+			{
+				Error = ex;
+			}
+			finally
+			{
+				Loading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private FIABContext GetContext()
+	{
+		return FIABContext.Create(Config);
+	}
+
+	private async Task<IEnumerable<Relationship>> FilterListing(string filterTerm)
+	{
+		await Task.CompletedTask;
+		try
+		{
+			using var context = FIABContext.Create(Config);
+			var query = context.Relationships
+				.Include(r => r.Subject)
+				.Include(r => r.RelationshipType)
+				.Include(r => r.Object)
+				.Where(n => true);
+
+			if(!string.IsNullOrWhiteSpace(filterTerm))
+			{
+				query = query.Where(n =>
+					(n.Subject!.Name.ToLower().Contains(filterTerm.ToLower())
+						||(n.Subject!.ShortDescription != null && n.Subject!.ShortDescription.ToLower().Contains(filterTerm.ToLower())))
+					||
+					(n.RelationshipType!.Name.ToLower().Contains(filterTerm.ToLower())
+						||(n.RelationshipType!.ShortDescription != null && n.RelationshipType!.ShortDescription.ToLower().Contains(filterTerm.ToLower())))
+					||
+					(n.Object!.Name.ToLower().Contains(filterTerm.ToLower())
+						||(n.Object!.ShortDescription != null && n.Object!.ShortDescription.ToLower().Contains(filterTerm.ToLower())))
+				);
+			}
+
+			return query;
+		}
+		catch(Exception ex)
+		{
+			Error = ex;
+			return new List<Relationship>();
+		}
+	}
+}
