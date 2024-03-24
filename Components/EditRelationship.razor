@@ -18,15 +18,9 @@
 		<div class="card-body">	
 			<div class="container-fluid">
 				<DisplayError Error=Error />
-				@if(ShowSuccessMessage)
-				{
-					<div class="row">
-						<div class="col">
-							<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
-						</div>
-						<strong>Success</strong><br/>
-					</div>
-				}
+				@*YOUR ARE HERE, TOO
+				This isn't wired-up yet.*@
+				<DisplaySuccess @ref=Success />
 				<ShowLoading Loading=Loading>
 				@if(!LockSubject)
 				{
@@ -123,6 +117,8 @@
 	[Parameter]
 	public bool ShowCancel { get; set; } = true;
 
+	private DisplaySuccess? Success;
+
 	
 	
 	private bool Loading = true;
@@ -131,8 +127,6 @@
 	private Exception? Error;
 
 	private bool Editing => Relationship.Id > 0;
-	private string SuccessMessage = string.Empty;
-	private bool ShowSuccessMessage = false;
 
 	private EditContext EC = new EditContext(new Relationship());
 	private string FormId = System.Guid.NewGuid().ToString();
@@ -227,16 +221,6 @@
 	{
 		OnCancel.Invoke();
 		await Task.CompletedTask;
-	}
-
-	private async Task ShowSuccess(string message, int seconds = 5)
-	{
-		// TODO spice this up as a component that uses cancellationTokens.
-		SuccessMessage = message;
-		ShowSuccessMessage = true;
-
-		await Task.Delay(seconds * 1000);
-		ShowSuccessMessage = false;
 	}
 
 	private async Task SubmitForm()
