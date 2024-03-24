@@ -97,7 +97,10 @@
 			{
 				<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=ResetForm>Reset</Button>@*Make a ComfirmReset component.*@
 			}
-			<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+			@if(ShowCancel)
+			{
+				<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+			}
 
 			<Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Size="Size.Small" Outline="true" class="card-link">Submit</Button>
 		</div>
@@ -113,11 +116,14 @@
 	public Relationship Relationship { get; set; } = default!;
 
 	[Parameter]
-	[EditorRequired]
-	public Action OnCancel { get; set; } = default!;
+	public Action OnCancel { get; set; } = async () => await Task.CompletedTask;
 
 	[Parameter]
 	public bool LockSubject { get; set; } = true;
+	[Parameter]
+	public bool ShowCancel { get; set; } = true;
+
+	
 	
 	private bool Loading = true;
 	private Relationship? FormRelationship = null!;
