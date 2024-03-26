@@ -18,8 +18,6 @@
 		<div class="card-body">	
 			<div class="container-fluid">
 				<DisplayError Error=Error />
-				@*YOUR ARE HERE, TOO
-				This isn't wired-up yet.*@
 				<DisplaySuccess @ref=Success />
 				<ShowLoading Loading=Loading>
 				@if(!LockSubject)
@@ -117,14 +115,11 @@
 	[Parameter]
 	public bool ShowCancel { get; set; } = true;
 
-	private DisplaySuccess? Success;
-
-	
-	
 	private bool Loading = true;
 	private Relationship? FormRelationship = null!;
 	private bool FormIsDirty = false;
 	private Exception? Error;
+	private DisplaySuccess? Success;
 
 	private bool Editing => Relationship.Id > 0;
 
@@ -257,6 +252,14 @@
 
 					await context.Relationships.AddAsync(FormRelationship);
 					await context.SaveChangesAsync();
+				}
+
+				//Fire-and-forget a success message.
+				if(Success != null)
+				{
+					#pragma warning disable 4014
+					Success.ShowSuccess($"Successfully recorded Relationship {FormRelationship.Id} to the database.");
+					#pragma warning restore 4014
 				}
 
 				// Now that FormRelationship is saved, update the Relationship that was passed-in.
