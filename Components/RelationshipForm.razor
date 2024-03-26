@@ -17,9 +17,7 @@
 			<ShowLoading Loading=Loading>
 				<div class="row">
 					<div class="col">
-						@*YOU ARE HERE
-						This isn't quite right.*@
-						<h1>@(Editing ? "Edit" : "Create") Relationship @Item?.Id</h1>
+						<h1>@(Editing ? "Edit" : "Create") Relationship @(Editing ? Item?.Id : "")</h1>
 					</div>
 				</div>
 				<EditRelationship Relationship=Item LockSubject=false ShowCancel=false />
@@ -37,7 +35,7 @@
 	private bool Loading = true;
 	private Exception? Error;
 	private Relationship? Item = new Relationship();
-	private bool Editing => Item?.Id != null;
+	private bool Editing => Item?.Id != null && Item.Id != 0;
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
