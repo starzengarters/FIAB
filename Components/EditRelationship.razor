@@ -22,7 +22,7 @@
 				<ShowLoading Loading=Loading>
 				@if(!LockSubject)
 				{
-					<div class="row">
+					<div class="row mt-3">
 						<div class="col">
 							<label for=@GetFormId("Subject") class="form-label">
 								Subject
@@ -31,7 +31,7 @@
 						</div>
 					</div>
 				}
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						<label for=@GetFormId("RelationshipType") class="form-label">
 							Relationship Type
@@ -40,7 +40,7 @@
 						<RelationshipTypeSearchableSelect @bind-Value=FormRelationship.RelationshipType Id=@GetFormId("RelationshipType") />
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						<label for=@GetFormId("Object") class="form-label">
 							Object
@@ -48,7 +48,7 @@
 						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object") />
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						@if(FormRelationship.Started != null)
 						{
@@ -64,7 +64,7 @@
 						}
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						@if(FormRelationship.Ended != null)
 						{
