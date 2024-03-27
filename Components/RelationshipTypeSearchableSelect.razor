@@ -4,7 +4,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect @ref=Search T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id="Id" Placeholder="Placeholder">
+<SearchableSelect @ref=Search T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id=@Id Placeholder="Placeholder">
 	<AddOptionFragment>
 		<p>
 			<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Relationship Type</Button>
