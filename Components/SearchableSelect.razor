@@ -72,10 +72,6 @@
 								@foreach(var option in DefaultOptions.Select((value, i) => new {i, value}))
 								{
 									<li>
-										@*
-										YOU ARE HERE
-										Wondering why this renders beautifully, but blows-up when selected
-										*@
 										<a
 											class="dropdown-item"
 											href="#"
@@ -297,7 +293,6 @@
 	private async Task OptionClicked(int id)
 	{
 		using var db = Contexts.FIABContext.Create(Config);
-		var opt = Options.Single(i => i.Id == id);
 		var set = db.Set<T>();
 		var x = await set.SingleOrDefaultAsync(n => n.Id == id);
 		await ValueChanged.InvokeAsync(x);
