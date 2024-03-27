@@ -50,7 +50,7 @@
 	private async Task<IEnumerable<RelationshipType>> SearchRTs(string searchTerm)
 	{
 		using var db = Contexts.FIABContext.Create(Config);
-		var results = await db.RelationshipTypes.Where(n => n.Name.ToLower().StartsWith(searchTerm.ToLower()))
+		var results = await db.RelationshipTypes.Where(n => n.Name.ToLower().Contains(searchTerm.ToLower()))
 		.AsNoTracking()
 		.Take(8)
 		.ToListAsync();
