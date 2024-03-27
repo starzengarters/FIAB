@@ -3,7 +3,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect @ref=Search T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns Id=@Id Placeholder="Placeholder">
+<SearchableSelect @ref=Search T="Noun" Value=Value ValueChanged=ValueChanged Search=SearchNouns DefaultOptions=Top5 Id=@Id Placeholder="Placeholder">
 	<AddOptionFragment>
 		<p>
 			<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Noun</Button>
@@ -42,9 +42,15 @@
 	public string? Placeholder { get; set; } = "Nouns starting with...";
 
 	private SearchableSelect<Noun> Search = new SearchableSelect<Noun>();
+	private List<Noun> Top5 = new List<Noun>();
 	private EditNoun? EditNounRef;
 	private Noun NounToAdd = new Noun();
 	private Modal NounModal = new Modal();
+
+	protected override async Task OnInitializedAsync()
+	{
+		Top5 = await GetTop(15);
+	}
 
 	private async Task<IEnumerable<Noun>> SearchNouns(string searchTerm)
 	{
@@ -54,6 +60,34 @@
 		.Take(8)
 		.ToListAsync();
 		return results;
+	}
+
+	private async Task<List<Noun>> GetTop(int cnt)
+	{
+		using var db = Contexts.FIABContext.Create(Config);
+		
+		var dbSet = db.Relationships
+			.Include(r => r.Subject)
+			.Include(r => r.Object);
+		
+		var subjects = dbSet
+			.GroupBy(r => r.Subject)
+			.Select(g => new { Noun = g.Key, Mentions = g.Count() });
+		
+		var objects = dbSet
+			.GroupBy(r => r.Object)
+			.Select(g => new { Noun = g.Key, Mentions = g.Count() });
+		
+		var result = await subjects
+			.Union(objects)
+			.GroupBy(o => o.Noun)
+			.Select(g => new { Noun = g.Key, Mentions = g.Sum(a => a.Mentions)})
+			.OrderByDescending(o => o.Mentions)
+			.Take(cnt)
+			.Select(o => o.Noun!)
+			.ToListAsync();
+		
+		return result;
 	}
 
 	private async Task ShowModal()

@@ -38,7 +38,7 @@
 				</div>
 			}
 			<Button Type="ButtonType.Button" Color="ButtonColor.Danger" Outline=true Disabled=@(Value == null) @onclick=ClearValue>Clear</Button>
-			<ul class="dropdown-menu dropdown-menu-end" style="width:100%">
+			<ul class="dropdown-menu" style="width:100%">
 				@if(_CancelableSearch.Exception != null)
 				{
 					<li>
@@ -59,15 +59,39 @@
 				{
 					@if(Options.Count() == 0)
 					{
-						<li>
-							@if(string.IsNullOrWhiteSpace(SearchTerm))
-							{
+						
+						@if(string.IsNullOrWhiteSpace(SearchTerm))
+						{
+							<li>
 								<span class="dropdown-item-text">
 									<Icon Name="IconName.Search" class="me-2" />Enter a search term.
 								</span>
-							}
-							else
+							</li>
+							if(DefaultOptions != null)
 							{
+								@foreach(var option in DefaultOptions.Select((value, i) => new {i, value}))
+								{
+									<li>
+										@*
+										YOU ARE HERE
+										Wondering why this renders beautifully, but blows-up when selected
+										*@
+										<a
+											class="dropdown-item"
+											href="#"
+											id="@(Id)-Item@(option.i)"
+											@onclick=@(() => OptionClicked(option.value.Id))
+											@onclick:preventDefault="true"
+										>
+											@GetName(option.value) - @GetDescription(option.value)
+										</a>
+									</li>
+								}
+							}
+						}
+						else
+						{
+							<li>
 								<span class="dropdown-item-text">
 									<Icon Name="IconName.ExclamationCircle" class="me-2" /> No results start with "@SearchTerm"
 									@if(AddOptionFragment != null)
@@ -75,8 +99,8 @@
 										@AddOptionFragment
 									}
 								</span>
-							}
-					</li>
+							</li>
+						}
 					}
 					@foreach(var option in Options.Select((value, i) => new {i, value}))
 					{
@@ -116,6 +140,9 @@
 	[Parameter]
 	[EditorRequired]
 	public Func<string, Task<IEnumerable<T>>> Search { get; set; } = default!;
+
+	[Parameter]
+	public IEnumerable<T>? DefaultOptions { get; set; }
 
 	[Parameter]
 	public string? Placeholder { get; set; } = "Search Term...";
