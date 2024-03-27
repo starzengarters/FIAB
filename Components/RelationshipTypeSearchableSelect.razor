@@ -4,7 +4,7 @@
 @inject IConfiguration Config
 @inject IJSRuntime JS
 
-<SearchableSelect @ref=Search T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs Id=@Id Placeholder="Placeholder">
+<SearchableSelect @ref=Search T="RelationshipType" Value=Value ValueChanged=ValueChanged Search=SearchRTs DefaultOptions=Top5 Id=@Id Placeholder="Placeholder">
 	<AddOptionFragment>
 		<p>
 			<Button Type="ButtonType.Button" Color="ButtonColor.Primary" onclick=@( async () => await ShowModal() ) >Add a new Relationship Type</Button>
@@ -43,9 +43,15 @@
 	public string? Placeholder { get; set; } = "Relationship Type...";
 
 	private SearchableSelect<RelationshipType> Search = new SearchableSelect<RelationshipType>();
+	private List<RelationshipType> Top5 = new List<RelationshipType>();
 	private EditRelationshipType? EditRtRef;
 	private RelationshipType RtToAdd = new RelationshipType();
 	private Modal RtModal = new Modal();
+
+	protected override async Task OnInitializedAsync()
+	{
+		Top5 = await GetTop(15);
+	}
 
 	private async Task<IEnumerable<RelationshipType>> SearchRTs(string searchTerm)
 	{
@@ -55,6 +61,42 @@
 		.Take(8)
 		.ToListAsync();
 		return results;
+	}
+
+	private async Task<List<RelationshipType>> GetTop(int cnt)
+	{
+		using var db = Contexts.FIABContext.Create(Config);
+		
+		var dbSet = db.Relationships
+			.Include(r => r.Subject)
+			.Include(r => r.Object);
+		
+		return await dbSet.
+			GroupBy(r => r.RelationshipType)
+			.OrderByDescending(g => g.Count())
+			.Take(cnt)
+			.Select(g => g.Key!)
+			.ToListAsync();
+		/*
+		var subjects = dbSet
+			.GroupBy(r => r.Subject)
+			.Select(g => new { Noun = g.Key, Mentions = g.Count() });
+		
+		var objects = dbSet
+			.GroupBy(r => r.Object)
+			.Select(g => new { Noun = g.Key, Mentions = g.Count() });
+		
+		var result = await subjects
+			.Union(objects)
+			.GroupBy(o => o.Noun)
+			.Select(g => new { Noun = g.Key, Mentions = g.Sum(a => a.Mentions)})
+			.OrderByDescending(o => o.Mentions)
+			.Take(cnt)
+			.Select(o => o.Noun!)
+			.ToListAsync();
+		
+		return result;
+		*/
 	}
 
 	private async Task ShowModal()
