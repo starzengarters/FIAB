@@ -16,13 +16,13 @@ namespace FIAB.Models
 		public RelationshipType? RelationshipType { get; set; }
 
 		[ForeignKey(nameof(RelationshipType))]
-		public int RelationshipTypeId { get; set; }
+		public int? RelationshipTypeId { get; set; }
 
 		[Required]
 		public Noun? Object { get; set; }
 
 		[ForeignKey(nameof(Object))]
-		public int ObjectId { get; set; }
+		public int? ObjectId { get; set; }
 
 		public DateOnly? Started { get; set; }
 		public bool StartedIsApproximate { get; set; } = false;

@@ -2,49 +2,53 @@
 @using FIAB.Contexts;
 @using Microsoft.AspNetCore.Components.Forms;
 @using Microsoft.EntityFrameworkCore;
+@namespace FIAB.Components
 @implements IDisposable;
 @inject IConfiguration Config;
 
 <div class="col">
 	<div class="card">
+	@if(LockSubject)
+	{
 		<h5 class="card-header">@Relationship.Subject?.Name <span style="font-size: smaller">@Relationship.Subject?.ShortDescription</span></h5>
+	}
 		@if(FormRelationship != null)
 		{
 		<EditForm EditContext="EC" OnSubmit="SubmitForm">
 		<div class="card-body">	
 			<div class="container-fluid">
 				<DisplayError Error=Error />
-				@if(ShowSuccessMessage)
+				<DisplaySuccess @ref=Success />
+				<ShowLoading Loading=Loading>
+				@if(!LockSubject)
 				{
-					<div class="row">
+					<div class="row mt-3">
 						<div class="col">
-							<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
+							<label for=@GetFormId("Subject") class="form-label">
+								Subject
+							</label>
+							<NounSearchableSelect @bind-Value=FormRelationship.Subject Id=@GetFormId("Subject") />
 						</div>
-						<strong>Success</strong><br/>
 					</div>
 				}
-				<ShowLoading Loading=Loading>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						<label for=@GetFormId("RelationshipType") class="form-label">
 							Relationship Type
 						</label>
 						@* TODO - Do recursion and indentation for parent child relationships. *@
-						@* TODO - Provision for adding a new RelationshipType here, inline. *@
 						<RelationshipTypeSearchableSelect @bind-Value=FormRelationship.RelationshipType Id=@GetFormId("RelationshipType") />
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						<label for=@GetFormId("Object") class="form-label">
 							Object
 						</label>
-						@* TODO - Do recursion and indentation for parent child relationships. *@
-						@* TODO - Provision for adding a new Object here, inline. *@
 						<NounSearchableSelect @bind-Value=FormRelationship.Object Id=@GetFormId("Object") />
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						@if(FormRelationship.Started != null)
 						{
@@ -60,7 +64,7 @@
 						}
 					</div>
 				</div>
-				<div class="row">
+				<div class="row mt-3">
 					<div class="col">
 						@if(FormRelationship.Ended != null)
 						{
@@ -85,7 +89,10 @@
 			{
 				<Button Color="ButtonColor.Danger" Size="Size.Small" Outline="true" class="card-link" @onclick=ResetForm>Reset</Button>@*Make a ComfirmReset component.*@
 			}
-			<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+			@if(ShowCancel)
+			{
+				<Button Color="ButtonColor.Warning" Size="Size.Small" Outline="true" class="card-link" @onclick=CancelClicked>Cancel</Button>
+			}
 
 			<Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Size="Size.Small" Outline="true" class="card-link">Submit</Button>
 		</div>
@@ -101,23 +108,20 @@
 	public Relationship Relationship { get; set; } = default!;
 
 	[Parameter]
-	[EditorRequired]
-	public Action OnCancel { get; set; } = default!;
+	public Action OnCancel { get; set; } = async () => await Task.CompletedTask;
 
 	[Parameter]
-	public IEnumerable<RelationshipType> RelationshipTypes { get; set; } = new List<RelationshipType>();
-	
+	public bool LockSubject { get; set; } = true;
 	[Parameter]
-	public IEnumerable<Noun> Objects { get; set;} = new List<Noun>();
-	
+	public bool ShowCancel { get; set; } = true;
+
 	private bool Loading = true;
 	private Relationship? FormRelationship = null!;
 	private bool FormIsDirty = false;
 	private Exception? Error;
+	private DisplaySuccess? Success;
 
 	private bool Editing => Relationship.Id > 0;
-	private string SuccessMessage = string.Empty;
-	private bool ShowSuccessMessage = false;
 
 	private EditContext EC = new EditContext(new Relationship());
 	private string FormId = System.Guid.NewGuid().ToString();
@@ -214,16 +218,6 @@
 		await Task.CompletedTask;
 	}
 
-	private async Task ShowSuccess(string message, int seconds = 5)
-	{
-		// TODO spice this up as a component that uses cancellationTokens.
-		SuccessMessage = message;
-		ShowSuccessMessage = true;
-
-		await Task.Delay(seconds * 1000);
-		ShowSuccessMessage = false;
-	}
-
 	private async Task SubmitForm()
 	{
 		var encounteredError = false;
@@ -237,6 +231,10 @@
 			{
 				if(Editing)
 				{
+					// Unset id properties to really break relationships.
+					FormRelationship.RelationshipTypeId = FormRelationship.RelationshipType?.Id;
+					FormRelationship.ObjectId = FormRelationship.Object?.Id;
+
 					context.Attach(FormRelationship);
 					context.Update(FormRelationship);
 					await context.SaveChangesAsync();
@@ -254,6 +252,14 @@
 
 					await context.Relationships.AddAsync(FormRelationship);
 					await context.SaveChangesAsync();
+				}
+
+				//Fire-and-forget a success message.
+				if(Success != null)
+				{
+					#pragma warning disable 4014
+					Success.ShowSuccess($"Successfully recorded Relationship {FormRelationship.Id} to the database.");
+					#pragma warning restore 4014
 				}
 
 				// Now that FormRelationship is saved, update the Relationship that was passed-in.
