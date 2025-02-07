@@ -11,14 +11,7 @@
 
 <div class="container">
 	<DisplayError Error=Error />
-	@if(ShowSuccessMessage)
-	{
-		<div class="row">
-			<div class="col">
-				<Alert Color="AlertColor.Success">@SuccessMessage</Alert>
-			</div>
-		</div>
-	}
+	<DisplaySuccess @ref=Success />
 
 	<AuthorizeView Roles=@Constants.Roles.Admin>
 		<NotAuthorized>
@@ -65,8 +58,7 @@
 
 	private bool Loading = true;
 	private Exception? Error;
-	private string SuccessMessage = string.Empty;
-	private bool ShowSuccessMessage = false;
+	private DisplaySuccess Success = new DisplaySuccess();
 	private string FormId = System.Guid.NewGuid().ToString();
 	private string GetFormId(string name) => $"{FormId}-{name}";
 
@@ -115,16 +107,6 @@
 		}
 	}
 
-	private async Task ShowSuccess(string message, int seconds = 5)
-	{
-		// TODO spice this up as a component that uses cancellationTokens.
-		SuccessMessage = message;
-		ShowSuccessMessage = true;
-
-		await Task.Delay(seconds * 1000);
-		ShowSuccessMessage = false;
-	}
-
 	private async Task ToggleRoleForUser(string role)
 	{
 		Loading = true;
@@ -137,16 +119,12 @@
 			if(userInRole)
 			{
 				await _UserManager.RemoveFromRoleAsync(Item!, role);
-				#pragma warning disable 4014
-				ShowSuccess($"Removed {Item.UserName} from {role}.");
-				#pragma warning restore 4014
+				await Success.ShowSuccess($"Removed {Item.UserName} from {role}.");
 			}
 			else
 			{
 				await _UserManager.AddToRoleAsync(Item!, role);
-				#pragma warning disable 4014
-				ShowSuccess($"Added {Item.UserName} to {role}.");
-				#pragma warning restore 4014
+				await Success.ShowSuccess($"Added {Item.UserName} to {role}.");
 			}
 
 			await SetUserDetails();
