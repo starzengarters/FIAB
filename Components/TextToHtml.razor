@@ -1,4 +1,5 @@
 @using FIAB.Models
+@using System.Text.RegularExpressions
 @namespace FIAB.Components
 
 @if(FormattedContent != null)
@@ -22,10 +23,19 @@
 		FormattedContent = TextAsHtml(Value ?? string.Empty);
 	}
 	
+	private static string RemoveHtmlTags(string input)
+	{
+		var regex = new Regex("<[^>]*>", RegexOptions.Compiled);
+		return regex.Replace(input, "");
+	}
+
 	private RenderFragment TextAsHtml(string input)
 	{
-		//TODO use regext to rip out any HTML tags in there to prevent injecction attacks.
-		var htmlString = input.Replace("\n", "\n<br/>\n");
-		return new RenderFragment(b => b.AddMarkupContent(0, htmlString));
+		// Strip out any and all HTML tags, because the input is supposed to be plaintext.
+		var cleanString = RemoveHtmlTags(input);
+		// Convert newline characters to `<br/>` tags to display linebreaks.
+		cleanString = cleanString.Replace("\n", "\n<br/>\n");
+		
+		return new RenderFragment(b => b.AddMarkupContent(0, cleanString));
 	}
 }
