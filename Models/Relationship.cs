@@ -24,16 +24,21 @@ namespace FIAB.Models
 		[ForeignKey(nameof(Object))]
 		public int? ObjectId { get; set; }
 
+		/* Thes properties should become RelationshipFields */
 		public DateOnly? Started { get; set; }
 		public bool StartedIsApproximate { get; set; } = false;
 		public DateOnly? Ended { get; set; }
 		public bool EndedIsApproximate { get; set; } = false;
-
 		// TODO - Add citations list here.
 		// TODO allow to "retire" a relationship in 2 ways
 		// 1.) A "refutation" where you detail why it was delted.
 		// 2.) A "I was just wrong/Bad data entry"
 		// Maybe it should allow a true deletion, too.
+		/* end of RelationshipField candidates */
+
+		public List<RelationshipField> Fields { get; set; } = new List<RelationshipField>();
+
+
 
 		/// <summary>
 		/// Copies the contents of this Relationship into the provied input.
@@ -53,4 +58,5 @@ namespace FIAB.Models
 			input.EndedIsApproximate = this.EndedIsApproximate;
 		}
 	}
+	
 }
